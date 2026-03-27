@@ -12,6 +12,7 @@ These rules are mandatory and must be followed at all times.
 2.  **Never Force Push**: Do not use `git push --force` on shared branches, especially `main`.
 3.  **All Tests Must Pass**: Never commit code that breaks existing tests.
 4.  **Do Not Remove or Disable Tests**: It is forbidden to comment out, skip, or delete tests to make a build pass. Always fix the underlying issue.
+5.  **In case tests fail**: Fix the code until all tests pass before committing. If you cannot fix the issue, do not commit and explain the blocker clearly.
 5.  **Adhere to TDD**: Follow the "Red-Green-Refactor" cycle for all new features and bug fixes.
 6.  **Preserve Architecture**: Do not violate the Clean Architecture boundaries (`domain`, `application`, `infrastructure`).
 7.  **No Secrets in Code**: Never commit API keys, passwords, or other sensitive credentials directly into the codebase. Use environment variables.

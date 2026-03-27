@@ -9,3 +9,11 @@ pyaml-env>=1.2.1
 pytest>=7.4.0
 pytest-cov>=4.1.0
 pytest-mock>=3.11.0
+
+# API communication
+httpx>=0.25.0
+respx>=0.20.0
+
+# Jira Client
+jira>=3.5.0
+

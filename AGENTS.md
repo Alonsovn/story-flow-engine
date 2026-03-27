@@ -4,6 +4,22 @@ This guide exists to help agentic tools, like Copilot, operate effectively withi
 
 ---
 
+## 🚨 Non-Negotiable Rules
+
+These rules are mandatory and must be followed at all times.
+
+1.  **Never Commit Directly to `main`**: All changes must be submitted via a pull request.
+2.  **Never Force Push**: Do not use `git push --force` on shared branches, especially `main`.
+3.  **All Tests Must Pass**: Never commit code that breaks existing tests.
+4.  **Do Not Remove or Disable Tests**: It is forbidden to comment out, skip, or delete tests to make a build pass. Always fix the underlying issue.
+5.  **Adhere to TDD**: Follow the "Red-Green-Refactor" cycle for all new features and bug fixes.
+6.  **Preserve Architecture**: Do not violate the Clean Architecture boundaries (`domain`, `application`, `infrastructure`).
+7.  **No Secrets in Code**: Never commit API keys, passwords, or other sensitive credentials directly into the codebase. Use environment variables.
+8.  **No Commented-Out Code**: Remove dead or commented-out code before committing.
+9.  **Keep Dependencies Clean**: Do not add new third-party packages without a valid reason.
+
+---
+
 ## Build, Lint, and Test Commands
 
 ### Build

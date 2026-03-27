@@ -1,0 +1,62 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "default_agent": "plan",
+
+  "instructions": [
+    "AGENTS.md",
+    "README.md"
+  ],
+
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      ".idea/**",
+      ".venv/**",
+      ".pytest_cache/**",
+      ".ruff_cache/**",
+      "__pycache__/**",
+      "**/*.pyc",
+      "htmlcov/**",
+      ".coverage",
+      ".opencode/node_modules/**",
+      "data/**"
+    ]
+  },
+
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "python3 -m pytest*": "allow"
+    },
+    "edit": "ask",
+    "webfetch": "allow",
+    "skill": {
+      "*": "allow"
+    }
+  },
+
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git status*": "allow",
+          "git diff*": "allow",
+          "git log*": "allow",
+          "python3 -m pytest*": "allow"
+        },
+        "edit": "allow"
+      }
+    },
+    "plan": {
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    }
+  }
+}

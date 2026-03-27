@@ -6,7 +6,7 @@ class EpicDataMapper:
     """Maps domain entities to DTOs."""
 
     @staticmethod
-    def to_story_response(story: UserStory) -> StoryDtoResponse:
+    def to_user_story_dto(story: UserStory) -> StoryDtoResponse:
         return StoryDtoResponse(
             key=story.key,
             numeric_id=story.numeric_id,
@@ -26,7 +26,7 @@ class EpicDataMapper:
         )
 
     @staticmethod
-    def to_epic_response(epic: Epic, stories: list[UserStory]) -> EpicDtoResponse:
+    def to_epic_dto(epic: Epic, stories: list[UserStory]) -> EpicDtoResponse:
         return EpicDtoResponse(
             key=epic.key,
             numeric_id=epic.numeric_id,
@@ -41,7 +41,7 @@ class EpicDataMapper:
             created_at=epic.created_at,
             updated_at=epic.updated_at,
             user_stories=[
-                EpicDataMapper.to_story_response(story) for story in stories
+                EpicDataMapper.to_user_story_dto(story) for story in stories
             ],
         )
 

@@ -26,7 +26,7 @@ class IssueStatus(str, Enum):
     def from_jira_status(cls, status: str) -> "IssueStatus":
         """Maps Jira status category to IssueStatus."""
         status_lower = status.lower()
-        if "done" in status_lower or "closed" in status_lower:
+        if "done" in status_lower or "closed" in status_lower or "resolved" in status_lower:
             return cls.DONE
         elif "progress" in status_lower or "review" in status_lower:
             return cls.IN_PROGRESS

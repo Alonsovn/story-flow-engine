@@ -1,6 +1,6 @@
 import httpx
 from datetime import datetime
-
+from src.app.infrastructure.logging.logger import AppLogger
 from src.app.domain.entities import Epic, IssueStatus
 from src.app.domain.value_objects import IssueId
 
@@ -40,8 +40,10 @@ class JiraApiRepository:
                 auth=(self.email, self.api_token),
                 headers={"Accept": "application/json"}
             )
-            response.raise_for_status()
-            data = response.json()
+        response.raise_for_status()
+        data = response.json()
+        logger = AppLogger.instance()
+        logger.info("Raw JIRA API response", extra={"response": data})
 
         # Map Jira response to Epic entity
         def parse_jira_datetime(dt_str: str) -> datetime:

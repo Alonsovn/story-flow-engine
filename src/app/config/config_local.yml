@@ -2,7 +2,20 @@ app:
   name: "Story Flow Engine"
   version: "1.0.0"
 
+logging:
+  level: "debug"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  console:
+    enabled: true
+    colored: true
+
 jira:
-    url: "https://your-jira-instance.atlassian.net"
-    api-key: "your-jira-api-key"
+  url: "https://your-jira-instance.atlassian.net"
+  api_version: "3"
+  timeout: 30
+  max_retries: 3
+  rate_limit:
+    requests_per_minute: 60
+  projects:
+    default: ""
 

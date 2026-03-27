@@ -47,7 +47,7 @@ async def test_get_epic_success(jira_repository):
 
     # Mock the HTTP request to the Jira API
     respx.get(
-        f"https://test-jira.atlassian.net/rest/agile/1.0/epic/{epic_key}"
+        f"https://test-jira.atlassian.net/rest/api/3/issue/{epic_key}"
     ).mock(
             side_effect=lambda request: (
                         Response(200, json=mock_response)

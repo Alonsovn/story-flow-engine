@@ -4,7 +4,7 @@ app:
 
 logging:
   level: "info"
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  format: "%(levelname)s %(asctime)s - %(message)s"
   console:
     enabled: true
     colored: true

@@ -10,12 +10,14 @@ logging:
     colored: true
 
 jira:
-  url: "https://your-jira-instance.atlassian.net"
+  url: "https://alonsovn.atlassian.net"
+  api_token: !ENV ${JIRA_API_TOKEN}
+  email: !ENV ${JIRA_EMAIL}
   api_version: "3"
   timeout: 30
   max_retries: 3
   rate_limit:
     requests_per_minute: 60
   projects:
-    default: ""
+    default: "OPH"
 

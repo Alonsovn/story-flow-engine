@@ -32,8 +32,10 @@ class JiraApiRepository:
         Raises:
             httpx.HTTPError: If the API request fails.
         """
-        url = f"{self.base_url}/rest/agile/1.0/epic/{issue_id.key}"
+        url = f"{self.base_url}/rest/api/3/issue/{issue_id.key}"
         
+        logger = AppLogger.instance()
+        logger.info("Making JIRA API call", extra={"email": self.email, "url": url})
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 url,
@@ -43,6 +45,7 @@ class JiraApiRepository:
         response.raise_for_status()
         data = response.json()
         logger = AppLogger.instance()
+        logger.info("Making JIRA API request", extra={"email": self.email, "url": url})
         logger.info("Raw JIRA API response", extra={"response": data})
 
         # Map Jira response to Epic entity

@@ -111,4 +111,146 @@ Please adhere to the following TDD principles when working on this codebase:
 
 ---
 
+## Backend Python Agent Guidelines
+
+When working on the FastAPI backend under `src/app/`, adhere to the following Clean Architecture, Domain-Driven Design (DDD), and Python best practices.
+
+### Clean Architecture Principles
+
+1. **Layer Separation**
+   - `domain/`: Business entities, value objects, and domain logic (no external dependencies)
+   - `application/`: Use cases, DTOs, interfaces for repositories/services
+   - `infrastructure/`: External implementations (DB, API clients, file system)
+   - `presentation/`: API routes, schemas, FastAPI dependencies
+
+2. **Dependency Rule**
+   - Dependencies must point inward. Outer layers depend on inner layers, never the reverse.
+   - Use dependency injection to decouple implementations from interfaces.
+
+3. **Single Responsibility**
+   - Each module/class should have one reason to change.
+   - Keep use cases focused on orchestrating domain logic, not implementing it.
+
+### Domain-Driven Design (DDD) Practices
+
+1. **Bounded Contexts**
+   - Group related domain logic into bounded contexts.
+   - Each context should have its own models, services, and repository interfaces.
+
+2. **Entities & Value Objects**
+   - **Entities**: Objects with a distinct identity that persists over time (e.g., `User`, `Story`)
+   - **Value Objects**: Immutable objects defined by their attributes (e.g., `EmailAddress`, `Money`)
+   - Use dataclasses or Pydantic models for value objects; ensure immutability.
+
+3. **Aggregates & Aggregate Roots**
+   - Define aggregates to group related entities and enforce invariants.
+   - The aggregate root is the only entity accessible from outside the aggregate.
+
+4. **Domain Services**
+   - Use domain services for operations that don't belong to a single entity.
+   - Keep domain services stateless and focused on business rules.
+
+5. **Repository Pattern**
+   - Define repository interfaces in `application/` (ports).
+   - Implement repositories in `infrastructure/` (adapters).
+   - Never leak infrastructure details into the domain layer.
+
+6. **Domain Events**
+   - Use domain events for cross-aggregate communication.
+   - Implement an event bus for decoupled event handling.
+
+### Python Best Practices
+
+1. **Type Hints**
+   - Use full type hints for all function signatures and class attributes.
+   - Use `typing.Optional` instead of `| None` for broader compatibility.
+   - Use Pydantic for DTOs and request/response models.
+
+2. **Async/Await**
+   - Use `async def` for I/O-bound operations (DB, HTTP calls).
+   - Use `await` for all async calls; avoid blocking the event loop.
+   - Use `run_in_executor` only for CPU-bound operations.
+
+3. **Dataclasses & Pydantic**
+   - Use `@dataclass(frozen=True)` for immutable value objects.
+   - Use Pydantic `BaseModel` for API schemas and DTOs.
+   - Use `BaseModel` with `ConfigDict` for configuration classes.
+
+4. **Error Handling**
+   - Define custom exception classes in the domain layer.
+   - Use exception hierarchies to categorize errors.
+   - Catch exceptions at the appropriate layer; re-raise domain exceptions from infrastructure.
+
+5. **Logging**
+   - Use `logging.getLogger(__name__)` for each module.
+   - Log at appropriate levels: `DEBUG` for development, `INFO` for significant events, `ERROR` for failures.
+   - Include contextual data in log messages using structured logging.
+
+6. **Configuration**
+   - Store configuration in `config.py` or `settings.py` using Pydantic `BaseSettings`.
+   - Never hardcode configuration values; use environment variables with sensible defaults.
+   - Group settings by environment (development, staging, production).
+
+7. **Imports**
+   - Follow this import order:
+     1. Standard library
+     2. Third-party packages
+     3. Local application modules (use absolute imports)
+   - Avoid circular imports by restructuring dependencies.
+
+8. **Docstrings**
+   - Write docstrings for public classes and functions.
+   - Use Google-style or NumPy-style docstrings consistently.
+
+### Testing Guidelines
+
+1. **Unit Tests**
+   - Test domain logic in isolation using mocks for external dependencies.
+   - Use `pytest` and `pytest-asyncio` for testing.
+   - Aim for high coverage of domain and application layers.
+
+2. **Integration Tests**
+   - Test repository implementations with test databases.
+   - Use fixtures for setting up test data.
+   - Clean up test data after each test.
+
+3. **API Tests**
+   - Use `FastAPI TestClient` for endpoint testing.
+   - Test both success and error scenarios.
+   - Validate request/response schemas.
+
+### Code Organization
+
+```
+src/app/
+├── __init__.py
+├── main.py                 # FastAPI app initialization
+├── config.py               # Application settings
+├── domain/
+│   ├── __init__.py
+│   ├── entities/           # Domain entities
+│   ├── value_objects/      # Value objects
+│   ├── events/             # Domain events
+│   ├── exceptions/         # Custom exceptions
+│   └── services/           # Domain services
+├── application/
+│   ├── __init__.py
+│   ├── use_cases/          # Application use cases
+│   ├── interfaces/         # Repository/service interfaces
+│   └── dtos/               # Data transfer objects
+├── infrastructure/
+│   ├── __init__.py
+│   ├── persistence/        # Database implementations
+│   ├── external/          # External service clients
+│   └── messaging/         # Event bus implementations
+└── presentation/
+    ├── __init__.py
+    ├── routes/            # API routers
+    ├── schemas/           # Pydantic request/response models
+    ├── dependencies/     # FastAPI dependencies
+    └── middleware/       # Custom middleware
+```
+
+---
+
 This document will evolve with the project. Keep it up-to-date as conventions change!

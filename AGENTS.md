@@ -18,18 +18,20 @@ These rules are mandatory and must be followed at all times.
 8.  **No Commented-Out Code**: Remove dead or commented-out code before committing.
 9.  **Keep Dependencies Clean**: Do not add new third-party packages without a valid reason.
 
+
 ---
 
-## Build, Lint, and Test Commands
+## Continuous Verification Guideline
 
-### Build
-TBD
+After implementing any feature, bug fix, or refactor, you must verify that the system remains stable and correct. Follow these steps to ensure no new issues have been introduced:
 
-### Lint
-TBD
-
-### Test
-TBD
+1.  **Run All Relevant Tests**: Execute the test suite (`pytest`) to confirm that all existing and new tests pass. This is the primary guard against regressions.
+2.  **Perform Static Analysis**: Run any available linting or static analysis tools to check for code quality and style violations.
+3.  **Check Build Integrity**: If a build process exists, ensure the application compiles and packages successfully without errors.
+4.  **Conduct Impact Analysis**:
+    *   Briefly consider the change's potential side effects.
+    *   If you modify a shared component (e.g., a domain entity), mentally review the areas that depend on it to ensure they are still compatible.
+5.  **Confirm High-Level Functionality**: Before finishing, perform a final "sanity check." Does the feature work as intended? Does the app still run? This confirms that the individual parts integrate correctly.
 
 ---
 

@@ -1,6 +1,6 @@
+from src.app.application.interfaces.jira_repository import JiraRepository
 from src.app.domain.value_objects import IssueId
 from src.app.domain.exceptions import EntityNotFoundException
-from src.app.application.interfaces import JiraRepository
 from src.app.application.dtos.epic_dto import EpicDtoResponse
 from src.app.application.mappers.epic_mapper import EpicDataMapper
 

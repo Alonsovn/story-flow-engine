@@ -1,11 +1,10 @@
 import pytest
 import respx
 from httpx import Response
-from datetime import datetime
 
 from src.app.domain.entities import Epic
 from src.app.domain.value_objects import IssueId
-from src.app.infrastructure.jira.jira_api_repository import JiraApiRepository
+from src.app.infrastructure.external.jira.jira_api_repository import JiraApiRepository
 
 
 @pytest.fixture

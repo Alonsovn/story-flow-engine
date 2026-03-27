@@ -74,22 +74,6 @@ npm test -- -t "Test Name"
 
 ---
 
-## Continuous Integration (CI)
-
-Ensure all code passes linting and tests before committing:
-
-1. Run all tests:
-   ```bash
-   npm test
-   ```
-2. Check formatting and linting:
-   ```bash
-   npx prettier --check .
-   npx eslint .
-   ```
-
----
-
 ### Test-Driven Development (TDD)
 
 Please adhere to the following TDD principles when working on this codebase:

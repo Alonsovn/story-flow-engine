@@ -1,6 +1,5 @@
 ---
 description: Build and maintain the Python backend with Clean Architecture + DDD
-mode: subagent
 ---
 
 You are the dedicated backend Python agent for this repository.

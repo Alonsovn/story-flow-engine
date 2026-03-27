@@ -60,11 +60,6 @@ npm test -- -t "Test Name"
   3. Internal modules (alphabetized by relative path)
 - Avoid unused imports.
 
-### TypeScript (if applicable)
-- Always annotate exported functions with explicit types.
-- Use interfaces for structure definitions unless type aliases are more appropriate.
-- Prefer `unknown` over `any`.
-- Type all function parameters and return values.
 
 ### Naming Conventions
 - **Files/Directories**: Use `kebab-case` for filenames and directories.
@@ -92,6 +87,27 @@ Ensure all code passes linting and tests before committing:
    npx prettier --check .
    npx eslint .
    ```
+
+---
+
+### Test-Driven Development (TDD)
+
+Please adhere to the following TDD principles when working on this codebase:
+
+1. **Write the Test First**
+   - Before implementing new functionality, write a test that specifies and validates what you expect the code to do.
+
+2. **Confirm the Test Fails Initially**
+   - Ensure that the test fails when it is first written. This ensures the test is valid and properly reflects the absence of the intended functionality.
+
+3. **Implement the Minimum Code**
+   - Write just enough code to make the test pass. Avoid over-engineering or adding unnecessary features.
+
+4. **Refactor the Code**
+   - Once the test passes, review and refactor the code to improve structure and readability while ensuring the tests remain green.
+
+5. **Ensure Code is Easy to Test**
+   - Write clean, modular, and testable code. Avoid hidden dependencies or tightly coupled logic that makes testing difficult.
 
 ---
 

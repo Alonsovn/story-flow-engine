@@ -23,7 +23,7 @@ class AppLogger:
 
         # Extract logging configuration
         level = log_config.get("level", "INFO").upper()
-        format = log_config.get("format", "%(levelname)s %(asctime)s - %(message)s")
+        format = log_config.get("format", "%(levelname)s %(asctime)s - %(message)s [%(extra)s]")
         date_format = log_config.get("date_format", "%Y-%m-%d %H:%M:%S")
 
         # Set up the logger

@@ -13,6 +13,7 @@ pytest-mock>=3.11.0
 
 # API communication
 httpx>=0.25.0
+backoff>=2.2.1
 respx>=0.20.0
 
 # Jira Client

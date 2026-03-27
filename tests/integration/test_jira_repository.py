@@ -5,16 +5,18 @@ from datetime import datetime
 
 from src.app.domain.entities import Epic
 from src.app.domain.value_objects import IssueId
-from src.app.infrastructure.persistence.jira_repository import JiraApiRepository
+from src.app.infrastructure.jira_api_repository import JiraApiRepository
 
 
 @pytest.fixture
 def jira_repository():
-    """Fixture to create a JiraApiRepository instance for testing."""
+    """
+    Fixture to create a JiraApiRepository instance for testing.
+    """
     return JiraApiRepository(
         base_url="https://test-jira.atlassian.net",
         email="test@example.com",
-        api_key="test_key"
+        api_token="test_key",
     )
 
 
@@ -41,16 +43,20 @@ async def test_get_epic_success(jira_repository):
             "customfield_10011": 8.0,  # Story Points
             "created": "2025-01-01T10:00:00.000-0500",
             "updated": "2025-01-02T11:00:00.000-0500",
-        }
+        },
     }
-    
+
     # Mock the HTTP request to the Jira API
-    respx.get(f"https://test-jira.atlassian.net/rest/api/3/issue/{epic_key}").mock(
-        return_value=Response(200, json=mock_response)
+    respx.get(
+        f"https://test-jira.atlassian.net/rest/agile/1.0/epic/{epic_key}"
+    ).mock(
+            side_effect=lambda request: (
+                        Response(200, json=mock_response)
+                        if request.headers.get("Authorization") else Response(401)
+            )
     )
 
     # Act
-    # This will fail because JiraApiRepository and its methods don't exist yet
     epic = await jira_repository.get_epic(IssueId.from_string(epic_key))
 
     # Assert

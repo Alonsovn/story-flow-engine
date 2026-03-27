@@ -7,4 +7,4 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Run the CLI with arguments
-python3 src/app/main.py
+python3 src/app/main.py "$@"

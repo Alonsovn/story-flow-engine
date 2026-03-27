@@ -1,8 +1,8 @@
 from src.app.domain.value_objects import IssueId
 from src.app.domain.exceptions import EntityNotFoundException
 from src.app.application.interfaces import JiraRepository
-from src.app.application.dtos import EpicDTO
-from src.app.application.mappers import EpicDataMapper
+from src.app.application.dtos import EpicDtoResponse
+from src.app.application.mappers.epic_mapper import EpicDataMapper
 
 
 class GetEpicWithStories:
@@ -22,7 +22,7 @@ class GetEpicWithStories:
         """
         self.jira_repository = jira_repository
 
-    async def execute(self, epic_key: str) -> EpicDTO:
+    async def execute(self, epic_key: str) -> EpicDtoResponse:
         """
         Executes the use case.
         
@@ -30,7 +30,7 @@ class GetEpicWithStories:
             epic_key: The key of the epic to retrieve (e.g., "PROJ-123").
             
         Returns:
-            An EpicDTO containing the epic and its user stories.
+            An EpicDtoResponse containing the epic and its user stories.
             
         Raises:
             EntityNotFoundException: If the epic with the given key does not exist.
@@ -39,7 +39,7 @@ class GetEpicWithStories:
 
         # 1. Fetch the Epic from the repository
         epic = await self.jira_repository.get_epic(epic_id)
-        
+
         if not epic:
             raise EntityNotFoundException("Epic", epic_key)
 

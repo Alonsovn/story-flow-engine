@@ -47,7 +47,7 @@ def interactive_menu(skip_initial_prompt=False):
             jira_key = inquirer.text(message="Enter the JIRA key:").execute()
             fetch_epic(jira_key)
         elif menu_choice == "exit":
-            typer.echo("Goodbye!")
+            typer.echo("Thanks for using Story Flow Engine! Have a great day!")
             break
 
 def fetch_epic(issue_id: str):

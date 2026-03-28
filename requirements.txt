@@ -18,3 +18,6 @@ respx>=0.20.0
 
 # Jira Client
 jira>=3.5.0
+
+# Interactive CLI
+InquirerPy

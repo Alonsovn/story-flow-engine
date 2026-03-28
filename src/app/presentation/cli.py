@@ -24,11 +24,14 @@ def show_welcome_message():
     typer.echo("System ready.")
     typer.echo("")
 
-def interactive_menu():
+def interactive_menu(skip_initial_prompt=False):
     """Handles the interactive user menu."""
     while True:
-        typer.echo("\nPress Enter to go back to the main menu...")
-        input()
+        if not skip_initial_prompt:
+            skip_initial_prompt = True
+        else:
+            typer.echo("\nPress Enter to go back to the main menu...")
+            input()
         os.system('cls' if os.name == 'nt' else 'clear')
         show_welcome_message()
         menu_options = {
@@ -77,4 +80,4 @@ def fetch_epic(issue_id: str):
 
 if __name__ == "__main__":
     show_welcome_message()
-    interactive_menu()
+    interactive_menu(skip_initial_prompt=False)

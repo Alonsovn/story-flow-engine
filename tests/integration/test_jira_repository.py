@@ -4,7 +4,7 @@ from httpx import Response
 
 from src.app.domain.entities import Epic
 from src.app.domain.value_objects import IssueId
-from src.app.infrastructure.external.jira.jira_api_repository import JiraApiRepository
+from src.app.infrastructure.external.jira.jira_api_repository_impl import JiraApiRepositoryImpl
 
 
 @pytest.fixture
@@ -12,11 +12,15 @@ def jira_repository():
     """
     Fixture to create a JiraApiRepository instance for testing.
     """
-    return JiraApiRepository(
-        base_url="https://test-jira.atlassian.net",
-        email="test@example.com",
-        api_token="test_key",
-    )
+
+    jira_config = {
+        "base_url": "https://test-jira.atlassian.net",
+        "email": "test@example.com",
+        "api_token": "test_key",
+        "project_key": "PROJ-1",
+    }
+
+    return JiraApiRepositoryImpl(jira_config)
 
 
 @pytest.mark.asyncio

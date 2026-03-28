@@ -18,6 +18,5 @@ jira:
   max_retries: 3
   rate_limit:
     requests_per_minute: 60
-  projects:
-    default: "OPH"
+  project_key: "OPH"
 

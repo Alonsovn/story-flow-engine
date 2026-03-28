@@ -8,7 +8,7 @@ from src.app.domain.value_objects import IssueId
 class JiraRepository(ABC):
     """
     Interface (Port) for interacting with Jira data.
-    
+
     This abstracts the data source, allowing the application layer
     to be independent of the specific Jira client implementation.
     """
@@ -17,10 +17,10 @@ class JiraRepository(ABC):
     async def get_epic(self, issue_id: IssueId) -> Optional[Epic]:
         """
         Retrieves an Epic by its IssueId.
-        
+
         Args:
             issue_id: The identifier of the Epic.
-            
+
         Returns:
             The Epic entity, or None if not found.
         """
@@ -30,10 +30,10 @@ class JiraRepository(ABC):
     async def get_user_story(self, issue_id: IssueId) -> Optional[UserStory]:
         """
         Retrieves a User Story by its IssueId.
-        
+
         Args:
             issue_id: The identifier of the User Story.
-            
+
         Returns:
             The UserStory entity, or None if not found.
         """
@@ -43,10 +43,10 @@ class JiraRepository(ABC):
     async def get_stories_in_epic(self, epic_id: IssueId) -> List[UserStory]:
         """
         Retrieves all User Stories belonging to a specific Epic.
-        
+
         Args:
             epic_id: The identifier of the parent Epic.
-            
+
         Returns:
             A list of UserStory entities.
         """
@@ -55,12 +55,11 @@ class JiraRepository(ABC):
     @abstractmethod
     async def find_epics_by_project(self, project_key: str) -> List[Epic]:
         """
-
         Finds all Epics within a given project.
-        
+
         Args:
             project_key: The Jira project key.
-            
+
         Returns:
             A list of Epic entities.
         """
@@ -70,7 +69,7 @@ class JiraRepository(ABC):
     async def update_story_status(self, issue_id: IssueId, new_status: str) -> None:
         """
         Updates the status of a User Story.
-        
+
         Args:
             issue_id: The identifier of the User Story to update.
             new_status: The new status to set.
@@ -81,10 +80,10 @@ class JiraRepository(ABC):
     async def create_story(self, story: UserStory) -> UserStory:
         """
         Creates a new User Story in Jira.
-        
+
         Args:
             story: The UserStory entity to create.
-            
+
         Returns:
             The created UserStory entity, including the new ID from Jira.
         """

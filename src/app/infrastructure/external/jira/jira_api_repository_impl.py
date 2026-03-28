@@ -1,39 +1,48 @@
+from typing import List, Optional
+
 import httpx
 from datetime import datetime
+
+from src.app.application.interfaces.jira_repository import JiraRepository
+from src.app.domain import UserStory
+from src.app.domain.exceptions import UnauthorizedWorkspaceAccess
 from src.app.infrastructure.logging.logger import AppLogger
 from src.app.domain.entities import Epic, IssueStatus
 from src.app.domain.value_objects import IssueId
 
 
-class JiraApiRepository:
-    def __init__(self, base_url: str, email: str, api_token: str):
+class JiraApiRepositoryImpl(JiraRepository):
+    def __init__(self, jira_config: dict):
         """
-        Initialize the JiraApiRepository with base URL and authentication details.
+        Initialize the JiraApiRepository with configuration from AppConfig.
 
         Args:
-            base_url (str): The base URL of the Jira instance (e.g., "https://your-domain.atlassian.net").
-            email (str): The email address associated with the API token.
-            api_token (str): The API token for authentication.
+            jira_config (dict): A dictionary containing Jira configuration parameters such as:
+                - base_url: The base URL of the Jira instance.
+                - email: The email address of the Jira instance.
+                - api_token: The API token of the Jira instance.
+                - project_space_key: The project space key of the Jira instance.
         """
-        self.base_url = base_url
-        self.email = email
-        self.api_token = api_token
+        self.base_url = jira_config.get("url")
+        self.email = jira_config.get("email")
+        self.api_token = jira_config.get("api_token")
+        self.project_space_key = jira_config.get("project_key")
 
-    async def get_epic(self, issue_id: IssueId) -> Epic:
+    async def get_epic(self, issue_id: IssueId) -> Optional[Epic]:
         """
-        Retrieve details of an epic by its key from Jira.
+               Retrieve details of an epic by its key from Jira.
 
-        Args:
-            issue_id (IssueId): The IssueId of the epic to retrieve.
+               Args:
+                   issue_id (IssueId): The IssueId of the epic to retrieve.
 
-        Returns:
-            Epic: The Epic domain entity.
+               Returns:
+                   Epic: The Epic domain entity.
 
-        Raises:
-            httpx.HTTPError: If the API request fails.
-        """
+               Raises:
+                   httpx.HTTPError: If the API request fails.
+               """
         url = f"{self.base_url}/rest/api/3/issue/{issue_id.key}"
-        
+
         logger = AppLogger.instance()
         logger.info("Making JIRA API call", extra={"email": self.email, "url": url})
         async with httpx.AsyncClient() as client:
@@ -69,3 +78,20 @@ class JiraApiRepository:
             labels=data["fields"].get("labels", []),
             story_points=data["fields"].get("customfield_10011"),
         )
+
+    async def get_user_story(self, issue_id: IssueId) -> Optional[UserStory]:
+        pass
+
+    async def get_stories_in_epic(self, epic_id: IssueId) -> List[UserStory]:
+        pass
+
+    async def find_epics_by_project(self, project_key: str) -> List[Epic]:
+        if project_key != self.project_space_key:
+            raise UnauthorizedWorkspaceAccess(project_key, self.project_space_key)
+        # Implementation for fetching epics will go here.
+
+    async def update_story_status(self, issue_id: IssueId, new_status: str) -> None:
+        pass
+
+    async def create_story(self, story: UserStory) -> UserStory:
+        pass

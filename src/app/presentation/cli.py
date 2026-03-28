@@ -22,21 +22,23 @@ def show_welcome_message():
     typer.echo("")
     typer.echo("System ready.")
     typer.echo("")
+
+def interactive_menu():
+    """Handles the interactive user menu."""
     typer.echo("You can orchestrate your workflow:")
-    typer.echo("")
     typer.echo("  ▶ get-epic-by-key  Retrieve an epic and its stories by JIRA key")
-    typer.echo("  ▶ create-epic    Generate structured epics from markdown")
-    typer.echo("  ▶ create-story   Generate structured epics from markdown")
+    typer.echo("  ▶ create-epics-from-md-file  Create epics from a markdown file")
+    typer.echo("  ▶ create-stories-from-md-file  Create stories from a markdown file")
     typer.echo("")
-    typer.echo("Awaiting your command...")
 
-@app.callback(invoke_without_command=True)
-def main(ctx: typer.Context):
-    """Story Flow Engine CLI - Manage JIRA epics and stories"""
-    if ctx.invoked_subcommand is None:
-        show_welcome_message()
+    choice = typer.prompt("Enter a command (e.g., get-epic-by-key)")
 
-@app.command()
+    if choice == "get-epic-by-key":
+        jira_key = typer.prompt("Enter the JIRA key")
+        fetch_epic(jira_key)
+    else:
+        typer.echo("Invalid option. Please try again.")
+
 def fetch_epic(issue_id: str):
     """
     Fetch details of an epic from JIRA using the issue ID.
@@ -66,5 +68,5 @@ def fetch_epic(issue_id: str):
     asyncio.run(main())
 
 if __name__ == "__main__":
-    # Ensure welcome message displays unconditionally via script
     show_welcome_message()
+    interactive_menu()

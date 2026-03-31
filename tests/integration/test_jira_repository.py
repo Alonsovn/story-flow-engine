@@ -105,8 +105,7 @@ async def test_create_epic_success(jira_repository):
     # Act
     epic = await jira_repository.create_epic(
         summary="Test Epic Creation",
-        description="A test epic for unit testing integration with Jira.",
-        priority=Priority.high(),
+        description="A test epic for unit testing integration with Jira."
     )
 
     # Assert
@@ -135,8 +134,7 @@ async def test_create_epic_unauthorized(jira_repository):
     with pytest.raises(BusinessRuleViolationException) as exc_info:
         await jira_repository.create_epic(
             summary="Unauthorized Epic",
-            description="Testing unauthorized response handling.",
-            priority=Priority.high(),
+            description="Testing unauthorized response handling."
         )
 
     assert "Unauthorized" in str(exc_info.value)
@@ -157,8 +155,7 @@ async def test_create_epic_internal_server_error(jira_repository):
     with pytest.raises(BusinessRuleViolationException) as exc_info:
         await jira_repository.create_epic(
             summary="Epic causing 500",
-            description="Testing internal server error handling.",
-            priority=Priority.medium(),
+            description="Testing internal server error handling."
         )
 
     assert "Internal Server Error" in str(exc_info.value)
@@ -179,8 +176,7 @@ async def test_create_epic_invalid_payload(jira_repository):
     with pytest.raises(BusinessRuleViolationException) as exc_info:
         await jira_repository.create_epic(
             summary="",  # Invalid because the summary is empty
-            description="Epic with invalid payload.",
-            priority=Priority.low(),
+            description="Epic with invalid payload."
         )
 
     assert "Invalid payload" in str(exc_info.value)

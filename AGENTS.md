@@ -132,23 +132,54 @@ Please adhere to the following TDD principles when working on this codebase:
 
 ## Backend Python Agent Guidelines
 
-When working on the FastAPI backend under `src/app/`, adhere to the following Clean Architecture, Domain-Driven Design (DDD), and Python best practices.
+When working on the FastAPI backend under `src/app/`, adhere to the following Clean Architecture, Domain-Driven Design (DDD), and Python programming principles.
 
-### Clean Architecture Principles
+## Best Practices and Principles
 
-1. **Layer Separation**
-   - `domain/`: Business entities, value objects, and domain logic (no external dependencies)
-   - `application/`: Use cases, DTOs, interfaces for repositories/services
-   - `infrastructure/`: External implementations (DB, API clients, file system)
-   - `presentation/`: API routes, schemas, FastAPI dependencies
+### Core Principles
 
-2. **Dependency Rule**
-   - Dependencies must point inward. Outer layers depend on inner layers, never the reverse.
-   - Use dependency injection to decouple implementations from interfaces.
+1. **SOLID Principles**:
+   - **Single Responsibility Principle (SRP):** Each class/module should have one and only one reason to change.
+   - **Open-Closed Principle (OCP):** Write code that is open for extension but closed for modification.
+   - **Liskov Substitution Principle (LSP):** Derived classes must be substitutable for their base classes.
+   - **Interface Segregation Principle (ISP):** Don’t force clients to depend on interfaces they don’t use.
+   - **Dependency Inversion Principle (DIP):** Depend on abstractions, not on concrete implementations.
 
-3. **Single Responsibility**
-   - Each module/class should have one reason to change.
-   - Keep use cases focused on orchestrating domain logic, not implementing it.
+2. **KISS (Keep It Simple, Stupid):** Keep code and architecture as simple as possible. Avoid complexity unless absolutely necessary.
+
+3. **YAGNI (You Aren’t Gonna Need It):** Don’t implement unused features or future-proof excessively.
+
+4. **DRY (Don’t Repeat Yourself):** Avoid duplicating logic. Refactor common components into reusable artifacts if it reduces redundancy.
+
+5. **High Cohesion, Low Coupling:** Ensure modules are functionally cohesive and minimize interdependencies.
+
+---
+
+### Alignment to Clean Architecture
+
+1. **Layer Separation:** Maintain clear boundaries between layers:
+   - `domain/`: Core business entities and logic.
+   - `application/`: Use cases and orchestrating domain operations.
+   - `infrastructure/`: Implementations for database, APIs, and integration with third-party services.
+   - `presentation/`: API interfaces (e.g., FastAPI).
+
+2. **Dependency Rule:** Outer layers (infrastructure, presentation) depend on inner layers (domain, application); never the reverse.
+
+3. **Ports and Adapters:** Use interfaces (ports) to define abstractions within the application layer and implement adapters within the infrastructure layer.
+
+---
+
+### Maintainable Python Code
+
+Adopt Python-specific best practices:
+1. Use type hints generously (ensure IDE/editor readability).
+2. Apply PEP8 styling conventions consistently (use `flake8` or similar tools).
+3. Refactor large methods or classes for clarity.
+4. Use Pythonic constructs like comprehensions and built-ins (e.g., `map`, `filter`) to promote idiomatic code.
+
+---
+
+Integrating these principles will ensure the backend remains scalable, robust, and adheres to industry-recognized standards.
 
 ### Domain-Driven Design (DDD) Practices
 

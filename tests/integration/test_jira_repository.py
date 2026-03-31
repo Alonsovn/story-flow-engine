@@ -92,6 +92,7 @@ async def test_create_epic_success(jira_repository):
             "summary": "Test Epic Creation",
             "description": "A test epic for unit testing integration with Jira.",
             "priority": {"name": "High"},
+            "status": {"name": "To Do"},
             "created": "2026-01-01T10:00:00.000-0500",
             "updated": "2026-01-01T11:00:00.000-0500",
         },

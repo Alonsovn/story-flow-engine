@@ -1,10 +1,11 @@
 import pytest
 import respx
 from httpx import Response
-
 from src.app.domain.entities import Epic
-from src.app.domain.value_objects import IssueId
+from src.app.domain.value_objects import IssueId, Priority
 from src.app.infrastructure.external.jira.jira_api_repository_impl import JiraApiRepositoryImpl
+from src.app.domain.exceptions import BusinessRuleViolationException
+from datetime import datetime
 
 
 @pytest.fixture
@@ -12,7 +13,6 @@ def jira_repository():
     """
     Fixture to create a JiraApiRepository instance for testing.
     """
-
     jira_config = {
         "base_url": "https://test-jira.atlassian.net",
         "email": "test@example.com",
@@ -28,7 +28,6 @@ def jira_repository():
 async def test_get_epic_success(jira_repository):
     """
     Test successful retrieval of an Epic from the Jira API.
-    This is the "Red" test that will fail initially.
     """
     # Arrange
     epic_key = "PROJ-1"
@@ -49,14 +48,10 @@ async def test_get_epic_success(jira_repository):
         },
     }
 
-    # Mock the HTTP request to the Jira API
     respx.get(
         f"https://test-jira.atlassian.net/rest/api/3/issue/{epic_key}"
     ).mock(
-            side_effect=lambda request: (
-                        Response(200, json=mock_response)
-                        if request.headers.get("Authorization") else Response(401)
-            )
+        return_value=Response(200, json=mock_response)
     )
 
     # Act
@@ -70,3 +65,122 @@ async def test_get_epic_success(jira_repository):
     assert epic.story_points.value == 8
     assert len(epic.labels) == 2
     assert epic.labels.has_label_named("backend")
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_create_epic_success(jira_repository):
+    """
+    Test successful creation of an Epic in the Jira API.
+    """
+    # Arrange
+    epic_key = "PROJ-100"
+    input_payload = {
+        "fields": {
+            "project": {"key": "PROJ-1"},
+            "summary": "Test Epic Creation",
+            "description": "A test epic for unit testing integration with Jira.",
+            "issuetype": {"name": "Epic"},
+            "priority": {"name": "High"},
+        }
+    }
+
+    mock_response = {
+        "id": "10001",
+        "key": epic_key,
+        "fields": {
+            "summary": "Test Epic Creation",
+            "description": "A test epic for unit testing integration with Jira.",
+            "priority": {"name": "High"},
+            "created": "2026-01-01T10:00:00.000-0500",
+            "updated": "2026-01-01T11:00:00.000-0500",
+        },
+    }
+
+    respx.post(f"https://test-jira.atlassian.net/rest/api/3/issue").mock(
+        return_value=Response(201, json=mock_response)
+    )
+
+    # Act
+    epic = await jira_repository.create_epic(
+        summary="Test Epic Creation",
+        description="A test epic for unit testing integration with Jira.",
+        priority=Priority.high(),
+    )
+
+    # Assert
+    assert epic is not None
+    assert isinstance(epic, Epic)
+    assert epic.key == epic_key
+    assert epic.summary == "Test Epic Creation"
+    assert epic.description == "A test epic for unit testing integration with Jira."
+    assert epic.priority == Priority.high()
+    assert epic.created_at == datetime.fromisoformat("2026-01-01T10:00:00-05:00")
+    assert epic.updated_at == datetime.fromisoformat("2026-01-01T11:00:00-05:00")
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_create_epic_unauthorized(jira_repository):
+    """
+    Test Epic creation fails with 401 Unauthorized.
+    """
+    # Arrange
+    respx.post("https://test-jira.atlassian.net/rest/api/3/issue").mock(
+        return_value=Response(401, json={"errorMessages": ["Unauthorized"], "errors": {}})
+    )
+
+    # Act & Assert
+    with pytest.raises(BusinessRuleViolationException) as exc_info:
+        await jira_repository.create_epic(
+            summary="Unauthorized Epic",
+            description="Testing unauthorized response handling.",
+            priority=Priority.high(),
+        )
+
+    assert "Unauthorized" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_create_epic_internal_server_error(jira_repository):
+    """
+    Test Epic creation fails with 500 Internal Server Error.
+    """
+    # Arrange
+    respx.post("https://test-jira.atlassian.net/rest/api/3/issue").mock(
+        return_value=Response(500, json={"errorMessages": ["Internal Server Error"], "errors": {}})
+    )
+
+    # Act & Assert
+    with pytest.raises(BusinessRuleViolationException) as exc_info:
+        await jira_repository.create_epic(
+            summary="Epic causing 500",
+            description="Testing internal server error handling.",
+            priority=Priority.medium(),
+        )
+
+    assert "Internal Server Error" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_create_epic_invalid_payload(jira_repository):
+    """
+    Test Epic creation fails with 400 Bad Request due to invalid payload.
+    """
+    # Arrange
+    respx.post("https://test-jira.atlassian.net/rest/api/3/issue").mock(
+        return_value=Response(400, json={"errorMessages": ["Invalid payload"], "errors": {"summary": "Summary is required"}})
+    )
+
+    # Act & Assert
+    with pytest.raises(BusinessRuleViolationException) as exc_info:
+        await jira_repository.create_epic(
+            summary="",  # Invalid because the summary is empty
+            description="Epic with invalid payload.",
+            priority=Priority.low(),
+        )
+
+    assert "Invalid payload" in str(exc_info.value)
+    assert "Summary is required" in str(exc_info.value)

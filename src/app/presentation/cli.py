@@ -6,8 +6,10 @@ from src.app.infrastructure.external.jira.dependencies import get_jira_repositor
 from src.app.domain.value_objects import IssueId, Priority
 from InquirerPy import inquirer
 import os
+
 # Initialize Typer app with help when no command is provided
 app = typer.Typer(no_args_is_help=False)
+
 
 def show_welcome_message():
     """Display the welcome message."""
@@ -26,6 +28,7 @@ def show_welcome_message():
     typer.echo("System ready.")
     typer.echo("")
 
+
 def interactive_menu(skip_initial_prompt=False):
     """Handles the interactive user menu."""
     while True:
@@ -38,7 +41,7 @@ def interactive_menu(skip_initial_prompt=False):
         show_welcome_message()
         menu_options = {
             "get_epic": "Retrieve an epic and its stories by JIRA key",
-            "create_epic": "Create a new epic in JIRA",
+            "create_epic": "Create a new epic in JIRA from file",
             "exit": "Exit the application",
         }
         menu_choice = inquirer.select(
@@ -51,10 +54,14 @@ def interactive_menu(skip_initial_prompt=False):
             fetch_epic(jira_key)
         elif menu_choice == "create_epic":
             file_path = inquirer.text(message="Enter the path to the Epic file:").execute()
+            if not file_path:
+                file_path = "data/EPIC-0-foundational/epic-0.md"
+
             create_epic(file_path)
         elif menu_choice == "exit":
             typer.echo("Thanks for using Story Flow Engine! Have a great day!")
             break
+
 
 def fetch_epic(issue_id: str):
     """
@@ -66,6 +73,7 @@ def fetch_epic(issue_id: str):
     Example:
         `python -m cli fetch_epic TEST-123`
     """
+
     async def main():
         # Retrieve JiraApiRepository instance
         jira_repo = get_jira_repository()
@@ -81,12 +89,17 @@ def fetch_epic(issue_id: str):
         except Exception as e:
             typer.echo(f"Error fetching epic: {e}")
 
+    # Use asyncio.run to handle the async call
+    asyncio.run(main())
+
+
 def create_epic(file_path: str):
     """
     Create a new epic in JIRA.
 
     Calls the JIRA API to create the epic and displays the result.
     """
+
     async def main():
         # Retrieve JiraApiRepository instance
         jira_repo = get_jira_repository()
@@ -98,33 +111,34 @@ def create_epic(file_path: str):
             # Parse Markdown data to extract epic details
             lines = epic_data.splitlines()
 
-            summary = None
-            description_lines = []
-            priority_name = None
+            epic_key = None
+            epic_title = None
+            epic_description_lines = []
+            
+            for idx, line in enumerate(lines):
+                if line.startswith('**Epic Key**:'):
+                    epic_key = line.split(':', 1)[1].strip()
+                elif line.startswith('**Epic Title**:'):
+                    epic_title = line.split(':', 1)[1].strip()
+                elif line.startswith('**Epic Description:**'):
+                    epic_description_lines = lines[idx + 1:]
 
-            for line in lines:
-                if line.startswith('**Summary**:'):
-                    summary = line.split(':', 1)[1].strip()
-                elif line.startswith('**Priority**:'):
-                    priority_name = line.split(':', 1)[1].strip()
-                else:
-                    description_lines.append(line)
+            if not epic_key or not epic_title:
+                raise ValueError("Missing 'Epic Key' or 'Epic Title' in the Markdown file.")
 
-            description = '\n'.join(description_lines).strip()
+            summary = f"{epic_key} - {epic_title}"
+            description = '\n'.join(line.strip() for line in epic_description_lines).strip()
 
-            if not summary or not priority_name:
-                raise ValueError("Missing required fields: 'Summary' and/or 'Priority' in the Markdown file.")
+            if not summary:
+                raise ValueError("Missing required fields: 'Epic Key' and/or `Epic Title` in the Markdown file.")
 
-            priority = Priority.from_string(priority_name)
-
-            priority = Priority.from_string(priority_name)
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
             typer.echo(f"Invalid file or content. Error: {e}")
             return
 
         # Call the async create_epic method
         new_epic = await jira_repo.create_epic(
-            summary=summary, description=description, priority=priority
+            summary=summary, description=description
         )
 
         typer.echo("Epic Successfully Created!")
@@ -132,6 +146,8 @@ def create_epic(file_path: str):
         typer.echo(f"Summary: {new_epic.summary}")
         typer.echo(f"Description: {new_epic.description}")
 
+    # Use asyncio.run to handle the async call
+    asyncio.run(main())
 
 
 if __name__ == "__main__":

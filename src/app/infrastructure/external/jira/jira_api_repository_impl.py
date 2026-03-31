@@ -28,10 +28,6 @@ class JiraApiRepositoryImpl(JiraRepository):
         self.api_token = jira_config.get("api_token")
         self.project_space_key = jira_config.get("project_key")
 
-    
-
-    
-
     async def get_epic(self, issue_id: IssueId) -> Optional[Epic]:
         """
         Retrieve details of an epic by its key from Jira.
@@ -61,14 +57,13 @@ class JiraApiRepositoryImpl(JiraRepository):
 
         return JiraApiHelpers.map_epic(data)
 
-    async def create_epic(self, summary: str, description: str, priority: Priority) -> Epic:
+    async def create_epic(self, summary: str, description: str) -> Epic:
         """
         Create a new Epic in Jira.
 
         Args:
             summary (str): Summary of the epic.
             description (str): Description of the epic.
-            priority (Priority): Priority of the epic.
 
         Returns:
             Epic: The created Epic.
@@ -81,9 +76,22 @@ class JiraApiRepositoryImpl(JiraRepository):
             "fields": {
                 "project": {"key": self.project_space_key},
                 "summary": summary,
-                "description": description,
+                "description": {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": description.strip()
+                                }
+                            ]
+                        }
+                    ]
+                },
                 "issuetype": {"name": "Epic"},
-                "priority": {"name": priority.name},
             }
         }
 

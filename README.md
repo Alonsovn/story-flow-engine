@@ -69,6 +69,13 @@ JIRA_DEFAULT_PRIORITY=Medium
 ### Parse Markdown Files
 
 ```bash
+# Parse a sample epic
+
+python -m src.main parse data/EPIC-0-foundational/epic.md
+
+# Parse sample stories
+python -m src.main parse data/EPIC-0-foundational/stories.md
+
 # Parse and display extracted entities
 python -m src.main parse <path-to-markdown>
 
@@ -82,8 +89,8 @@ python -m src.main parse <path> --epics-only
 ### Create Jira Issues
 
 ```bash
-# Dry run (validate without creating)
-python -m src.main create <path> --project PROJ --dry-run
+# Dry run with sample data (validate without creating)
+python -m src.main create data/EPIC-0-foundational/ --project PROJ --dry-run
 
 # Create issues in Jira
 python -m src.main create <path> --project PROJ
@@ -101,45 +108,75 @@ python -m src.main config validate
 
 ## Markdown Format
 
+Place your own epics and user stories inside the `data/` directory, following the EPIC-0 convention: one subfolder per epic (e.g., `data/EPIC-1-my-feature/`) containing an `epic.md` and a `stories.md` file. The `data/.gitkeep` file ensures the directory is tracked in version control.
+
 ### Epic Format
 
 ```markdown
-## Epic 1: Client and Project Lifecycle Governance
+# Epic: Project and Local Development Setup (Foundational)
 
-**Problem Statement:** Freelancers need...
+**Epic Title**: Project and Local Development Setup (Foundational)
+**Epic Key**: EPIC-0
+**Summary**: Establish foundational project structure...
+**Labels**: foundational, setup, ci-cd
+**Priority**: Must Have
+**Components**: Backend, Frontend, Database
+**Fix Version**: MVP-1
 
-**Objective:** Provide a stable...
+---
+
+**Epic Description:**
+Problem Statement: Delivery teams cannot begin engineering work...
+
+Objective: Establish the foundational project structure...
 
 Included scope:
-- Item 1
-- Item 2
+- Repository structure and folder organization
+- Local development environment setup (Python, Node.js, Docker, database)
+- CI/CD pipeline scaffolding and basic testing framework integration
 
 Excluded scope:
-- Item 1
+- Feature-specific implementation beyond structure and scaffolding
+- Advanced deployment automation or multi-region strategies
 
 Dependencies:
-- [Link](./other-doc.md)
+- [Architecture Solution Design](../../03-architecture/architecture-solution-design.md)
+- [Technology Stack](../../03-architecture/technology-stack.md)
 
-Acceptance criteria:
-- Given..., when..., then...
+Measurable success criteria:
+- Every engineer can clone and run local dev environments in under 15 minutes.
+- CI/CD pipeline runs on every commit and reports clear pass/fail status.
 ```
 
 ### User Story Format
 
 ```markdown
-### US-MVP-BE-001: Admin Authentication Service
+### US-EP0-BE-001: Backend Modular Monolith Structure and Scaffolding
 
-**Epic**: Epic 1
+**Story ID**: US-EP0-BE-001
+**Epic Link**: EPIC-0
 **Priority**: Must Have
 **Effort Estimate**: 8
 
 **As a** Backend Engineer,
-**I want to** implement secure auth,
-**So that** Admin users can log in safely.
+**I want to** establish a backend modular monolith repository structure,
+**So that** all team members can develop and test code with consistent project organization.
 
 **Acceptance Criteria**:
-- [ ] Given..., when..., then...
-- [ ] Given..., when..., then...
+- [ ] Given the backend repository is cloned, then folder structure includes modules/, shared/, config/, and tests/ directories.
+- [ ] Given a developer runs setup script, then all dependencies are installed and project is ready for local development.
+
+**Deliverables**:
+- Backend repository root with modules/, shared/, config/, and tests/ directories.
+- Setup script for fast local environment configuration.
+
+**Dependencies**:
+- [Architecture Solution Design](../../03-architecture/architecture-solution-design.md).
+- [Technology Stack](../../03-architecture/technology-stack.md).
+
+**Success Metrics**:
+- First-time setup completes in under 15 minutes.
+- All imports follow agreed pattern.
 ```
 
 ## Architecture
@@ -148,32 +185,44 @@ The project follows **Clean Architecture** principles with **Domain-Driven Desig
 
 ```
 src/app/
-├── main.py                 # Entry point
-├── config/                 # Configuration management
-├── features/
-│   ├── cli/               # CLI commands
-│   └── jira/              # Jira integration
-│       ├── domain/        # Entities, value objects, services
-│       ├── application/   # Use cases, DTOs
-│       └── infrastructure/# External implementations
+├── main.py                     # Entry point
+├── config/                     # YAML-based configuration management
+├── domain/
+│   ├── entities/               # Epic, UserStory
+│   ├── value_objects/          # IssueId, Label, Priority, StoryPoints
+│   └── exceptions/             # Business rule, not found, duplicate, etc.
+├── application/
+│   ├── use_cases/              # GetEpicWithStories
+│   ├── dtos/                   # EpicDTO, StoryDTOs
+│   ├── interfaces/             # JiraRepository port
+│   └── mappers/                # Entity ↔ DTO mapping
+├── infrastructure/
+│   ├── external/jira/          # Jira API client (httpx-based)
+│   └── logging/                # Structured logging
+├── presentation/
+│   └── cli.py                  # Typer CLI commands
+└── shared/
+    ├── global_variables.py
+    └── utils/                  # Retry decorator, log utilities
 ```
 
 ### Domain Layer
 
-- **Entities**: Epic, UserStory, JiraProject
-- **Value Objects**: StoryId, Priority, EpicId
-- **Domain Events**: EpicCreated, StoryCreated
+- **Entities**: `Epic`, `UserStory` — core business objects with behavior
+- **Value Objects**: `IssueId`, `Priority`, `StoryPoints`, `Label` — immutable, self-validating
+- **Exceptions**: `BusinessRuleViolation`, `NotFoundError`, `DuplicateStoryError`, `InvalidTransitionError`, `UnauthorizedAccessError`
 
 ### Application Layer
 
-- **Use Cases**: ParseMarkdown, CreateJiraIssues, DryRun
-- **Services**: MarkdownParser, JiraMapper, StoryFlowService
-- **Ports**: MarkdownReader, JiraClient interfaces
+- **Use Cases**: `GetEpicWithStories` — orchestrates domain logic
+- **DTOs**: `EpicDTO`, `StoryDTO` — data transfer objects for boundaries
+- **Interfaces**: `JiraRepository` — port defining Jira operations
+- **Mappers**: `EpicMapper` — transforms between domain entities and DTOs
 
 ### Infrastructure Layer
 
-- **Parsers**: EpicParser, StoryParser
-- **Jira Client**: JiraHttpClient, ResponseMapper
+- **Jira Client**: `JiraApiRepositoryImpl` — httpx-based REST client implementing `JiraRepository`
+- **Logging**: Structured logger with retry decorator for transient failures
 
 ## Development
 

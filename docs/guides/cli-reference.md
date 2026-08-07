@@ -1,0 +1,67 @@
+# CLI Reference
+
+Story Flow Engine provides an interactive menu-driven CLI with InquirerPy, plus direct invocation options for scripting.
+
+## Launching the CLI
+
+```bash
+# Using the convenience script
+./scripts/run-cli
+
+# Or directly
+python -m src.app.presentation.cli
+```
+
+On launch, you'll see the Story Flow Engine welcome screen followed by the main menu.
+
+## Interactive Menu
+
+Navigate with arrow keys and press Enter to select.
+
+### Main Menu Options
+
+| Option                                           | Description                                        |
+| ------------------------------------------------ | -------------------------------------------------- |
+| **Retrieve an epic and its stories by JIRA key** | Fetches an epic from Jira and displays its details |
+| **Create a new epic in JIRA from file**          | Parses a Markdown file and creates an epic in Jira |
+| **Exit the application**                         | Closes the CLI                                     |
+
+### Retrieve an Epic
+
+1. Select **"Retrieve an epic and its stories by JIRA key"**
+2. Enter the Jira issue key (e.g., `PROJ-123`)
+3. The CLI displays: key, summary, and description
+
+```text
+Epic Summary:
+Key: PROJ-123
+Summary: Backend Modular Monolith Setup
+Description: Establish foundational project structure...
+```
+
+### Create an Epic from Markdown
+
+1. Select **"Create a new epic in JIRA from file"**
+2. Enter the path to an epic Markdown file (defaults to `data/EPIC-0-foundational/epic-0.md`)
+3. The tool parses the file, reads `Epic Key`, `Epic Title`, and `Epic Description`, then creates the issue
+4. Confirmation with key, summary, and description is displayed
+
+```text
+Epic Successfully Created!
+Key: PROJ-456
+Summary: EPIC-1 - My Feature
+Description: ...
+```
+
+After each operation, press Enter to return to the main menu.
+
+## Error Handling
+
+| Error                            | Cause                             | Solution                                                               |
+| -------------------------------- | --------------------------------- | ---------------------------------------------------------------------- |
+| `ModuleNotFoundError`            | Virtual environment not activated | Run `source .venv/bin/activate`                                        |
+| `FileNotFoundError`              | Config file missing               | Check `APP_ENV` matches an existing YAML config                        |
+| `UnauthorizedWorkspaceAccess`    | Project key mismatch              | Verify `jira.project_key` in YAML config                               |
+| `BusinessRuleViolationException` | Invalid epic data                 | Check Markdown file format (see [Markdown Format](markdown-format.md)) |
+| `EntityNotFoundException`        | Epic not found in Jira            | Verify the Jira key exists                                             |
+| HTTP 401                         | Invalid credentials               | Check `JIRA_EMAIL` and `JIRA_API_TOKEN` in `.env`                      |

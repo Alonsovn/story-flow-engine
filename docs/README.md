@@ -1,0 +1,48 @@
+# Story Flow Engine Documentation
+
+Welcome to the Story Flow Engine documentation. Pick your path:
+
+## For New Users
+
+| Guide | Description |
+|-------|-------------|
+| [Installation](getting-started/installation.md) | Prerequisites, clone, install, verify |
+| [Configuration](getting-started/configuration.md) | `.env` variables, YAML config, Jira API token |
+| [CLI Reference](guides/cli-reference.md) | All commands, interactive menu, scripting examples |
+| [Markdown Format](guides/markdown-format.md) | Epic and user story template specification |
+
+## For Developers
+
+| Guide | Description |
+|-------|-------------|
+| [Architecture Overview](architecture/overview.md) | Clean Architecture, DDD patterns, layer diagrams |
+| [Development Setup](development/setup.md) | Dev environment, code style, conventions |
+| [Testing Guide](development/testing.md) | Test structure, running tests, mocking strategy |
+| [Contributing](../CONTRIBUTING.md) | PR guidelines, checklist, how to contribute |
+
+## Project Structure
+
+```
+story-flow-engine/
+├── data/                  # Your epic and story markdown files
+├── docs/                  # This documentation
+├── scripts/               # Helper scripts (run-cli)
+├── src/app/               # Application source
+│   ├── domain/            # Business logic (entities, value objects)
+│   ├── application/       # Use cases, DTOs, repository interfaces
+│   ├── infrastructure/    # External adapters (Jira client)
+│   ├── presentation/      # CLI interface
+│   └── shared/            # Cross-cutting utilities (logging, retry)
+└── tests/                 # Unit and integration tests
+```
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| CLI | Typer + Rich + InquirerPy |
+| API Client | httpx (async) |
+| Validation | Pydantic v2 |
+| Parsing | markdown-it-py |
+| Config | python-dotenv + pyaml-env |
+| Testing | pytest + pytest-asyncio + respx |

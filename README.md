@@ -1,205 +1,162 @@
 # Story Flow Engine
 
-A powerful CLI tool that transforms structured Markdown files into Jira issues. Built with Clean Architecture and Domain-Driven Design principles.
+A CLI tool that transforms structured Markdown files into Jira issues. Write your epics and user stories once in Markdown, push them to Jira automatically.
 
-## Overview
+![story-cli-home](./docs/images/story-cli-preview.png)
 
-Story Flow Engine automates the conversion from structured Markdown to Jira issues. Product teams write detailed epics and user stories in Markdown files during planning sessions, but manually creating these artifacts in Jira is time-consuming and error-prone. This tool bridges that gap.
-
-## Features
-
-- **Markdown Parsing**: Parse structured epic and user story templates from Markdown files
-- **Jira Integration**: Create issues directly in Jira via REST API
-- **Hierarchical Support**: Manage Epic → Stories relationships
-- **Dry-Run Mode**: Validate everything before actual Jira creation
-- **Extensible Architecture**: Built for future API support (FastAPI)
-- **Beautiful CLI Output**: Rich formatting for parsed data display
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| CLI | Typer + Rich |
-| API Client | `jira` library + httpx |
-| Validation | Pydantic v2 |
-| Parsing | `markdown-it-py` |
-| Config | python-dotenv + pyaml-env |
-| Testing | pytest + pytest-mock |
-
-## Installation
+## 🚀 Quick Start
 
 ```bash
-# Clone the repository
-git clone <repo-url>
-cd story-flow-engine
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
+git clone <repo-url> && cd story-flow-engine
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Jira credentials
+cp .env.example .env    # edit with your Jira credentials
+./scripts/run-cli
 ```
 
-## Configuration
+## ✨ Features
 
-### Environment Variables
+- **Markdown Parsing** — Parse structured epic and user story templates
+- **Jira Integration** — Create and fetch issues via REST API
+- **Hierarchical Support** — Manage Epic → Stories relationships
+- **Interactive CLI** — Menu-driven interface with InquirerPy, or direct commands for scripting
+- **Clean Architecture** — Domain-Driven Design with clear separation of concerns
 
-Create a `.env` file with your Jira credentials:
+## 💻 Usage
+
+### Interactive Menu
 
 ```bash
-APP_ENV=local
-LOG_LEVEL=debug
-
-# Jira Configuration
-JIRA_URL=https://your-domain.atlassian.net
-JIRA_EMAIL=your-email@example.com
-JIRA_API_TOKEN=your-api-token
-JIRA_PROJECT_KEY=PROJ
-JIRA_DEFAULT_ISSUE_TYPE=Story
-JIRA_DEFAULT_PRIORITY=Medium
+./scripts/run-cli
+# or
+python -m src.app.presentation.cli
 ```
 
-## Usage
+Three options available:
 
-### Parse Markdown Files
+1. **Retrieve an epic** — Fetch epic details from Jira by key (e.g., `PROJ-123`)
+2. **Create a new epic** — Parse a Markdown file and create the epic in Jira
+3. **Exit**
+
+### Direct Commands (for scripts / CI)
+
+The CLI also supports argument-based invocation:
 
 ```bash
-# Parse and display extracted entities
-python -m src.main parse <path-to-markdown>
+# Fetch an epic by Jira key
+python -m src.app.presentation.cli fetch-epic PROJ-123
 
-# Output in JSON format
-python -m src.main parse <path> --format json
-
-# Parse only epics
-python -m src.main parse <path> --epics-only
+# Create an epic from a markdown file
+python -m src.app.presentation.cli create-epic data/EPIC-0-foundational/epic.md
 ```
 
-### Create Jira Issues
+> Full CLI reference: [CLI Reference Guide](docs/guides/cli-reference.md)
 
-```bash
-# Dry run (validate without creating)
-python -m src.main create <path> --project PROJ --dry-run
+## 📝 Markdown Format
 
-# Create issues in Jira
-python -m src.main create <path> --project PROJ
-```
+Place epics and stories under `data/EPIC-N-description/` with `epic.md` and `stories.md` files.
 
-### Configuration Management
-
-```bash
-# Display current configuration
-python -m src.main config show
-
-# Validate configuration
-python -m src.main config validate
-```
-
-## Markdown Format
-
-### Epic Format
+### Epics
 
 ```markdown
-## Epic 1: Client and Project Lifecycle Governance
+# Epic: My Feature
 
-**Problem Statement:** Freelancers need...
-
-**Objective:** Provide a stable...
-
-Included scope:
-- Item 1
-- Item 2
-
-Excluded scope:
-- Item 1
-
-Dependencies:
-- [Link](./other-doc.md)
-
-Acceptance criteria:
-- Given..., when..., then...
-```
-
-### User Story Format
-
-```markdown
-### US-MVP-BE-001: Admin Authentication Service
-
-**Epic**: Epic 1
+**Epic Title**: My Feature
+**Epic Key**: EPIC-1
+**Summary**: Short description of the epic
+**Labels**: frontend, api
 **Priority**: Must Have
-**Effort Estimate**: 8
 
-**As a** Backend Engineer,
-**I want to** implement secure auth,
-**So that** Admin users can log in safely.
+---
 
-**Acceptance Criteria**:
-- [ ] Given..., when..., then...
-- [ ] Given..., when..., then...
+**Epic Description:**
+Detailed description here...
 ```
 
-## Architecture
+### User Stories
 
-The project follows **Clean Architecture** principles with **Domain-Driven Design**:
+```markdown
+# Story: User Authentication
 
+**Story Title**: User Authentication
+**Story Key**: STORY-1
+**As a** visitor
+**I want** to sign in securely
+**So that** I can access my private dashboard
+**Labels**: backend, auth
+**Priority**: Should Have
+**Story Points**: 5
+
+---
+
+**Acceptance Criteria:**
+
+- User can sign in with email and password
+- Invalid credentials return a clear error message
+- Session remains active until logout
 ```
+
+> Full template spec: [Markdown Format Guide](docs/guides/markdown-format.md)
+
+## 🏗️ Architecture
+
+```text
 src/app/
-├── main.py                 # Entry point
-├── config/                 # Configuration management
-├── features/
-│   ├── cli/               # CLI commands
-│   └── jira/              # Jira integration
-│       ├── domain/        # Entities, value objects, services
-│       ├── application/   # Use cases, DTOs
-│       └── infrastructure/# External implementations
+├── main.py                      # Entry point
+├── config/                      # YAML-based configuration
+├── domain/                      # Entities, value objects, exceptions
+│   ├── entities/                # Epic, UserStory
+│   ├── value_objects/           # IssueId, Priority, StoryPoints, Label
+│   └── exceptions/              # BusinessRule, NotFound, Duplicate, etc.
+├── application/                 # Use cases, DTOs, repository interfaces
+│   ├── use_cases/               # GetEpicWithStories
+│   ├── dtos/                    # EpicDTO, StoryDTO
+│   ├── interfaces/              # JiraRepository (port)
+│   └── mappers/                 # Entity ↔ DTO mapping
+├── infrastructure/              # External adapters
+│   └── external/jira/           # httpx-based Jira REST client
+├── presentation/                # Typer CLI + InquirerPy menus
+└── shared/                      # Cross-cutting utilities
+    ├── logging/                 # Structured logger (AppLogger)
+    └── utils/                   # Retry decorator, log utilities
 ```
 
-### Domain Layer
+The project follows **Clean Architecture** with **Domain-Driven Design**. Entities use factory methods, value objects are immutable, and the application layer depends only on abstractions (ports), not concrete implementations.
 
-- **Entities**: Epic, UserStory, JiraProject
-- **Value Objects**: StoryId, Priority, EpicId
-- **Domain Events**: EpicCreated, StoryCreated
+> Deep dive: [Architecture Overview](docs/architecture/overview.md)
 
-### Application Layer
-
-- **Use Cases**: ParseMarkdown, CreateJiraIssues, DryRun
-- **Services**: MarkdownParser, JiraMapper, StoryFlowService
-- **Ports**: MarkdownReader, JiraClient interfaces
-
-### Infrastructure Layer
-
-- **Parsers**: EpicParser, StoryParser
-- **Jira Client**: JiraHttpClient, ResponseMapper
-
-## Development
-
-### Running Tests
+## 🛠️ Development
 
 ```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=src
-
-# Run specific test file
-pytest tests/unit/domain/
+pytest                  # run all tests
+pytest --cov=src        # with coverage
+pytest tests/unit/domain/   # specific path
 ```
 
-### Code Style
+- **Style**: PEP 8, Google-style docstrings, full type hints
+- **Naming**: camelCase variables, PascalCase classes
 
-The project follows these conventions:
+> Dev setup guide: [Development Setup](docs/development/setup.md) · Testing: [Testing Guide](docs/development/testing.md)
 
-- **Python Style Guide**: PEP 8
-- **Naming**: camelCase for variables, PascalCase for classes
-- **Type Hints**: Full type hints on all functions
-- **Docstrings**: Google-style docstrings
+## 📚 Documentation
 
+| Topic             | Link                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| Installation      | [Installation Guide](docs/getting-started/installation.md)   |
+| Configuration     | [Configuration Guide](docs/getting-started/configuration.md) |
+| CLI Reference     | [CLI Reference Guide](docs/guides/cli-reference.md)          |
+| Markdown Format   | [Markdown Format Guide](docs/guides/markdown-format.md)      |
+| Architecture      | [Architecture Overview](docs/architecture/overview.md)       |
+| Development Setup | [Development Setup](docs/development/setup.md)               |
+| Testing Guide     | [Testing Guide](docs/development/testing.md)                 |
+| Contributing      | [Contributing Guide](CONTRIBUTING.md)                        |
 
-## License
+## 🤝 Contributing
 
-MIT License - see [LICENSE](LICENSE) for details.
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. ✨ Any contributions you make are **greatly appreciated** — whether it's fixing a typo 📝, improving documentation 📚, squashing a bug 🐛, or proposing a new feature 🚀.
+
+If you have an idea 💡, open an issue to discuss it first, then submit a pull request. New to the codebase? The [Contributing Guide](CONTRIBUTING.md) walks you through setup, conventions, and your first contribution. 🎉
+
+## ⚖️ License
+
+MIT — see [LICENSE](LICENSE).

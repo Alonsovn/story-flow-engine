@@ -1,7 +1,8 @@
 import pytest
 import respx
 from httpx import Response
-from src.app.domain.entities import Epic
+from src.app.application.dtos.story_dtos import CreateStoryDtoRequest
+from src.app.domain.entities import Epic, UserStory
 from src.app.domain.value_objects import IssueId, Priority
 from src.app.infrastructure.external.jira.jira_api_repository_impl import JiraApiRepositoryImpl
 from src.app.domain.exceptions import BusinessRuleViolationException
@@ -181,3 +182,70 @@ async def test_create_epic_invalid_payload(jira_repository):
 
     assert "Invalid payload" in str(exc_info.value)
     assert "Summary is required" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_create_story_success(jira_repository):
+    """
+    Test successful creation of a Story in the Jira API, linked to its epic.
+    """
+    # Arrange
+    story_key = "PROJ-101"
+    mock_response = {
+        "id": "10002",
+        "key": story_key,
+        "fields": {
+            "summary": "US-EP0-BE-001 - Backend Scaffolding",
+            "description": "**As a** Backend Engineer",
+            "status": {"name": "To Do"},
+            "reporter": {"displayName": "Test User"},
+            "created": "2026-01-01T10:00:00.000-0500",
+            "updated": "2026-01-01T11:00:00.000-0500",
+        },
+    }
+
+    respx.post("https://test-jira.atlassian.net/rest/api/3/issue").mock(
+        return_value=Response(201, json=mock_response)
+    )
+
+    request = CreateStoryDtoRequest(
+        summary="US-EP0-BE-001 - Backend Scaffolding",
+        description="**As a** Backend Engineer",
+        epic_key="PROJ-100",
+        story_points=8,
+    )
+
+    # Act
+    story = await jira_repository.create_story(request)
+
+    # Assert
+    assert isinstance(story, UserStory)
+    assert story.key == story_key
+    assert story.epic_link.key == "PROJ-100"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_create_story_invalid_payload(jira_repository):
+    """
+    Test Story creation fails with 400 Bad Request due to invalid payload.
+    """
+    respx.post("https://test-jira.atlassian.net/rest/api/3/issue").mock(
+        return_value=Response(
+            400,
+            json={"errorMessages": ["Invalid payload"], "errors": {"parent": "Parent is invalid"}},
+        )
+    )
+
+    request = CreateStoryDtoRequest(
+        summary="Bad Story",
+        description="Description",
+        epic_key="PROJ-999",
+    )
+
+    with pytest.raises(BusinessRuleViolationException) as exc_info:
+        await jira_repository.create_story(request)
+
+    assert "Invalid payload" in str(exc_info.value)
+    assert "Parent is invalid" in str(exc_info.value)

@@ -1,5 +1,7 @@
 from datetime import datetime
-from src.app.domain.entities import Epic, IssueStatus
+from typing import Optional
+
+from src.app.domain.entities import Epic, IssueStatus, UserStory
 
 class JiraApiHelpers:
     @staticmethod
@@ -32,4 +34,32 @@ class JiraApiHelpers:
             priority=data["fields"].get("priority", {}).get("name") if data["fields"].get("priority") else None,
             labels=data["fields"].get("labels", []),
             story_points=data["fields"].get("customfield_10011"),
+        )
+
+    @staticmethod
+    def map_user_story(data: dict, epic_key: Optional[str] = None) -> UserStory:
+        """
+        Map a Jira API issue response to the UserStory domain entity.
+
+        Args:
+            data (dict): Jira API response data.
+            epic_key (Optional[str]): Parent epic key, when known from the
+                creation/query context rather than the response payload.
+
+        Returns:
+            UserStory: The mapped UserStory entity.
+        """
+        return UserStory.create(
+            key=data["key"],
+            numeric_id=int(data["id"]),
+            summary=data["fields"].get("summary", ""),
+            description=data["fields"].get("description", ""),
+            status=IssueStatus.from_jira_status(data["fields"]["status"]["name"]),
+            created_at=JiraApiHelpers.parse_jira_datetime(data["fields"]["created"]),
+            updated_at=JiraApiHelpers.parse_jira_datetime(data["fields"]["updated"]),
+            reporter=data["fields"].get("reporter", {}).get("displayName"),
+            priority=data["fields"].get("priority", {}).get("name") if data["fields"].get("priority") else None,
+            labels=data["fields"].get("labels", []),
+            story_points=data["fields"].get("customfield_10011"),
+            epic_key=epic_key,
         )

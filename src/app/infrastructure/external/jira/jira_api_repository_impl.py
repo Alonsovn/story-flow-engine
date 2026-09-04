@@ -2,13 +2,21 @@ from typing import List, Optional
 
 import httpx
 from src.app.infrastructure.external.jira.helpers import JiraApiHelpers
+from src.app.infrastructure.external.jira.markdown_to_adf import markdown_to_adf
 
+from src.app.application.dtos.story_dtos import CreateStoryDtoRequest
 from src.app.application.interfaces.jira_repository import JiraRepository
 from src.app.domain import UserStory
 from src.app.domain.exceptions import UnauthorizedWorkspaceAccess, BusinessRuleViolationException
 from src.app.infrastructure.logging.logger import AppLogger
 from src.app.domain.entities import Epic, IssueStatus
 from src.app.domain.value_objects import IssueId, Priority
+
+# TBD (specs/2026-09-03-epic-story-jira-upload-with-adf-formatting.md, Phase 1):
+# confirm these against the target Jira project's actual issue type scheme
+# before relying on story creation/linking in production.
+_STORY_ISSUE_TYPE = "Story"
+_STORY_POINTS_FIELD = "customfield_10011"
 
 
 class JiraApiRepositoryImpl(JiraRepository):
@@ -76,21 +84,7 @@ class JiraApiRepositoryImpl(JiraRepository):
             "fields": {
                 "project": {"key": self.project_space_key},
                 "summary": summary,
-                "description": {
-                    "type": "doc",
-                    "version": 1,
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": description.strip()
-                                }
-                            ]
-                        }
-                    ]
-                },
+                "description": markdown_to_adf(description),
                 "issuetype": {"name": "Epic"},
             }
         }
@@ -130,5 +124,56 @@ class JiraApiRepositoryImpl(JiraRepository):
     async def update_story_status(self, issue_id: IssueId, new_status: str) -> None:
         pass
 
-    async def create_story(self, story: UserStory) -> UserStory:
-        pass
+    async def create_story(self, request: CreateStoryDtoRequest) -> UserStory:
+        """
+        Create a new User Story in Jira, linked to a parent epic.
+
+        Args:
+            request: Fields needed to create the story (summary, description,
+                parent epic key, optional story points).
+
+        Returns:
+            UserStory: The created User Story.
+
+        Raises:
+            BusinessRuleViolationException: If the creation fails due to
+                invalid input or configuration.
+        """
+        url = f"{self.base_url}/rest/api/3/issue"
+        fields = {
+            "project": {"key": self.project_space_key},
+            "summary": request.summary,
+            "description": markdown_to_adf(request.description),
+            "issuetype": {"name": _STORY_ISSUE_TYPE},
+            # TBD (specs/2026-09-03-epic-story-jira-upload-with-adf-formatting.md,
+            # Phase 1): "parent" links a story to its epic on team-managed Jira
+            # projects; company-managed projects may need a dedicated Epic Link
+            # custom field instead. Confirm against the real project before relying
+            # on this in production.
+            "parent": {"key": request.epic_key},
+        }
+        if request.story_points is not None:
+            fields[_STORY_POINTS_FIELD] = request.story_points
+
+        payload = {"fields": fields}
+
+        logger = AppLogger.instance()
+        logger.info("Creating a new Story in Jira", extra={"epic_key": request.epic_key})
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url, auth=(self.email, self.api_token), json=payload
+            )
+
+        if response.status_code != 201:
+            error_message = response.json().get('errorMessages', ['Unknown error'])
+            logger.error("Failed to create Story in Jira", extra={"response_body": response.text})
+            raise BusinessRuleViolationException(
+                f"Failed to create a Story: {error_message}",
+                details=response.json().get("errors", {}),
+            )
+
+        data = response.json()
+        logger.info("Story successfully created in Jira", extra={"response": data})
+
+        return JiraApiHelpers.map_user_story(data, epic_key=request.epic_key)

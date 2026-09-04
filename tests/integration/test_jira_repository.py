@@ -70,23 +70,70 @@ async def test_get_epic_success(jira_repository):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_get_user_story_success(jira_repository):
+    """
+    Test successful retrieval of a User Story from the Jira API.
+    """
+    # Arrange
+    story_key = "PROJ-101"
+    mock_response = {
+        "id": "10002",
+        "key": story_key,
+        "fields": {
+            "summary": "Test Story from API",
+            "description": "A detailed description.",
+            "status": {"name": "To Do"},
+            "reporter": {"displayName": "Test User"},
+            "parent": {"key": "PROJ-100"},
+            "created": "2025-01-01T10:00:00.000-0500",
+            "updated": "2025-01-02T11:00:00.000-0500",
+        },
+    }
+
+    respx.get(f"https://test-jira.atlassian.net/rest/api/3/issue/{story_key}").mock(
+        return_value=Response(200, json=mock_response)
+    )
+
+    # Act
+    story = await jira_repository.get_user_story(IssueId.from_string(story_key))
+
+    # Assert
+    assert story is not None
+    assert isinstance(story, UserStory)
+    assert story.key == story_key
+    assert story.summary == "Test Story from API"
+    assert story.epic_link.key == "PROJ-100"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_user_story_not_found(jira_repository):
+    """
+    Test retrieval of a non-existent User Story returns None.
+    """
+    story_key = "PROJ-404"
+    respx.get(f"https://test-jira.atlassian.net/rest/api/3/issue/{story_key}").mock(
+        return_value=Response(404, json={"errorMessages": ["Issue does not exist"]})
+    )
+
+    story = await jira_repository.get_user_story(IssueId.from_string(story_key))
+
+    assert story is None
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_create_epic_success(jira_repository):
     """
     Test successful creation of an Epic in the Jira API.
     """
     # Arrange
     epic_key = "PROJ-100"
-    input_payload = {
-        "fields": {
-            "project": {"key": "PROJ-1"},
-            "summary": "Test Epic Creation",
-            "description": "A test epic for unit testing integration with Jira.",
-            "issuetype": {"name": "Epic"},
-            "priority": {"name": "High"},
-        }
-    }
 
-    mock_response = {
+    # Jira's issue create response only contains {id, key, self}, not the
+    # full "fields" object - the repository re-fetches the created issue.
+    create_response = {"id": "10001", "key": epic_key, "self": "https://test-jira.atlassian.net/rest/api/3/issue/10001"}
+    fetched_response = {
         "id": "10001",
         "key": epic_key,
         "fields": {
@@ -99,8 +146,11 @@ async def test_create_epic_success(jira_repository):
         },
     }
 
-    respx.post(f"https://test-jira.atlassian.net/rest/api/3/issue").mock(
-        return_value=Response(201, json=mock_response)
+    respx.post("https://test-jira.atlassian.net/rest/api/3/issue").mock(
+        return_value=Response(201, json=create_response)
+    )
+    respx.get(f"https://test-jira.atlassian.net/rest/api/3/issue/{epic_key}").mock(
+        return_value=Response(200, json=fetched_response)
     )
 
     # Act
@@ -192,7 +242,11 @@ async def test_create_story_success(jira_repository):
     """
     # Arrange
     story_key = "PROJ-101"
-    mock_response = {
+
+    # Jira's issue create response only contains {id, key, self}, not the
+    # full "fields" object - the repository re-fetches the created issue.
+    create_response = {"id": "10002", "key": story_key, "self": "https://test-jira.atlassian.net/rest/api/3/issue/10002"}
+    fetched_response = {
         "id": "10002",
         "key": story_key,
         "fields": {
@@ -200,13 +254,17 @@ async def test_create_story_success(jira_repository):
             "description": "**As a** Backend Engineer",
             "status": {"name": "To Do"},
             "reporter": {"displayName": "Test User"},
+            "parent": {"key": "PROJ-100"},
             "created": "2026-01-01T10:00:00.000-0500",
             "updated": "2026-01-01T11:00:00.000-0500",
         },
     }
 
     respx.post("https://test-jira.atlassian.net/rest/api/3/issue").mock(
-        return_value=Response(201, json=mock_response)
+        return_value=Response(201, json=create_response)
+    )
+    respx.get(f"https://test-jira.atlassian.net/rest/api/3/issue/{story_key}").mock(
+        return_value=Response(200, json=fetched_response)
     )
 
     request = CreateStoryDtoRequest(

@@ -108,10 +108,48 @@ class JiraApiRepositoryImpl(JiraRepository):
         data = response.json()
         logger.info("Epic successfully created in Jira", extra={"response": data})
 
-        return JiraApiHelpers.map_epic(data)
+        # Jira's issue create response only contains {id, key, self}, not the
+        # full "fields" object, so fetch the created issue to map it fully.
+        created_epic = await self.get_epic(IssueId(key=data["key"], numeric_id=int(data["id"])))
+        if created_epic is None:
+            raise BusinessRuleViolationException(
+                "Epic was created in Jira but could not be re-fetched", entity_key=data["key"]
+            )
+        return created_epic
 
     async def get_user_story(self, issue_id: IssueId) -> Optional[UserStory]:
-        pass
+        """
+        Retrieve details of a User Story by its key from Jira.
+
+        Args:
+            issue_id (IssueId): The IssueId of the story to retrieve.
+
+        Returns:
+            UserStory: The User Story domain entity, or None if not found.
+
+        Raises:
+            httpx.HTTPError: If the API request fails.
+        """
+        url = f"{self.base_url}/rest/api/3/issue/{issue_id.key}"
+        logger = AppLogger.instance()
+        logger.info("Making JIRA API call", extra={"email": self.email, "url": url})
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url,
+                auth=(self.email, self.api_token),
+                headers={"Accept": "application/json"},
+            )
+
+        if response.status_code == 404:
+            return None
+
+        response.raise_for_status()
+        data = response.json()
+        logger.info("Raw JIRA API response", extra={"response": data})
+
+        epic_key = data["fields"].get("parent", {}).get("key")
+        return JiraApiHelpers.map_user_story(data, epic_key=epic_key)
 
     async def get_stories_in_epic(self, epic_id: IssueId) -> List[UserStory]:
         pass
@@ -176,4 +214,11 @@ class JiraApiRepositoryImpl(JiraRepository):
         data = response.json()
         logger.info("Story successfully created in Jira", extra={"response": data})
 
-        return JiraApiHelpers.map_user_story(data, epic_key=request.epic_key)
+        # Jira's issue create response only contains {id, key, self}, not the
+        # full "fields" object, so fetch the created issue to map it fully.
+        created_story = await self.get_user_story(IssueId(key=data["key"], numeric_id=int(data["id"])))
+        if created_story is None:
+            raise BusinessRuleViolationException(
+                "Story was created in Jira but could not be re-fetched", entity_key=data["key"]
+            )
+        return created_story

@@ -1,5 +1,9 @@
 import typer
 import asyncio
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.table import Table
 from src.app.application.use_cases import CreateEpicWithStories
 from src.app.domain.exceptions import BusinessRuleViolationException
 from src.app.infrastructure.external.jira.dependencies import get_jira_repository
@@ -9,6 +13,7 @@ import os
 
 # Initialize Typer app with help when no command is provided
 app = typer.Typer(no_args_is_help=False)
+console = Console()
 
 
 def show_welcome_message():
@@ -84,10 +89,8 @@ def fetch_epic(issue_id: str):
             issue_id_vo = IssueId.from_string(issue_id)
             # Await the async get_epic method
             epic = await jira_repo.get_epic(issue_id_vo)
-            typer.echo("Epic Summary:")
-            typer.echo(f"Key: {epic.key}")
-            typer.echo(f"Summary: {epic.summary}")
-            typer.echo(f"Description: {epic.description}")
+            body = Markdown(f"**{epic.summary}**\n\n{epic.description}")
+            console.print(Panel(body, title=f"Epic: {epic.key}"))
         except Exception as e:
             typer.echo(f"Error fetching epic: {e}")
 
@@ -118,21 +121,22 @@ def create_epic_with_stories(folder_path: str):
             typer.echo(f"Could not create epic: {e}")
             return
 
-        typer.echo("Epic Successfully Created!")
-        typer.echo(f"Key: {result.epic.key}")
-        typer.echo(f"Summary: {result.epic.summary}")
-        typer.echo(f"Description: {result.epic.description}")
+        body = Markdown(f"**{result.epic.summary}**\n\n{result.epic.description}")
+        console.print(Panel(body, title=f"Epic Created: {result.epic.key}"))
 
         if not result.story_results:
             return
 
-        typer.echo("")
-        typer.echo(f"Stories ({len(result.story_results)}):")
+        table = Table(title=f"Stories ({len(result.story_results)})")
+        table.add_column("Story ID")
+        table.add_column("Status")
+        table.add_column("Result")
         for story_result in result.story_results:
             if story_result.success:
-                typer.echo(f"  [OK] {story_result.story_id} -> {story_result.key}")
+                table.add_row(story_result.story_id, "[green]OK[/green]", story_result.key)
             else:
-                typer.echo(f"  [FAILED] {story_result.story_id}: {story_result.error}")
+                table.add_row(story_result.story_id, "[red]FAILED[/red]", story_result.error)
+        console.print(table)
 
     # Use asyncio.run to handle the async call
     asyncio.run(main())

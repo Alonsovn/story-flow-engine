@@ -123,6 +123,51 @@ async def test_get_user_story_not_found(jira_repository):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_get_epic_with_adf_description(jira_repository):
+    """
+    Jira Cloud's GET issue API returns "description" as an ADF object, not
+    a plain string - confirm it's converted to readable markdown, not left
+    as a raw dict.
+    """
+    epic_key = "PROJ-1"
+    mock_response = {
+        "id": "10001",
+        "key": epic_key,
+        "fields": {
+            "summary": "Test Epic from API",
+            "description": {
+                "type": "doc",
+                "version": 1,
+                "content": [
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Release Checklist"}]},
+                    {
+                        "type": "bulletList",
+                        "content": [
+                            {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "First item"}]}]}
+                        ],
+                    },
+                ],
+            },
+            "status": {"name": "To Do"},
+            "created": "2025-01-01T10:00:00.000-0500",
+            "updated": "2025-01-02T11:00:00.000-0500",
+        },
+    }
+
+    respx.get(f"https://test-jira.atlassian.net/rest/api/3/issue/{epic_key}").mock(
+        return_value=Response(200, json=mock_response)
+    )
+
+    epic = await jira_repository.get_epic(IssueId.from_string(epic_key))
+
+    assert isinstance(epic.description, str)
+    assert "{'type': 'doc'" not in epic.description
+    assert "## Release Checklist" in epic.description
+    assert "- First item" in epic.description
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_create_epic_success(jira_repository):
     """
     Test successful creation of an Epic in the Jira API.

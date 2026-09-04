@@ -200,7 +200,7 @@ async def test_get_stories_in_epic_success(jira_repository):
         ]
     }
 
-    respx.get("https://test-jira.atlassian.net/rest/api/3/search").mock(
+    respx.get("https://test-jira.atlassian.net/rest/api/3/search/jql").mock(
         return_value=Response(200, json=mock_response)
     )
 
@@ -218,7 +218,7 @@ async def test_get_stories_in_epic_empty(jira_repository):
     """
     Test an epic with no linked stories returns an empty list.
     """
-    respx.get("https://test-jira.atlassian.net/rest/api/3/search").mock(
+    respx.get("https://test-jira.atlassian.net/rest/api/3/search/jql").mock(
         return_value=Response(200, json={"issues": []})
     )
 

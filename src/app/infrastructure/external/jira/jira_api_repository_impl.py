@@ -169,7 +169,9 @@ class JiraApiRepositoryImpl(JiraRepository):
             httpx.HTTPError: If the API request fails.
         """
         jql = f'parent = "{epic_id.key}" AND issuetype = "{_STORY_ISSUE_TYPE}"'
-        url = f"{self.base_url}/rest/api/3/search"
+        # Jira Cloud deprecated GET/POST /rest/api/3/search (now 410 Gone) in
+        # favor of /rest/api/3/search/jql.
+        url = f"{self.base_url}/rest/api/3/search/jql"
         logger = AppLogger.instance()
         logger.info("Fetching stories for epic", extra={"epic_key": epic_id.key})
 

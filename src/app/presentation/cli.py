@@ -53,7 +53,9 @@ def interactive_menu(skip_initial_prompt=False):
             jira_key = inquirer.text(message="Enter the JIRA key:").execute()
             fetch_epic(jira_key)
         elif menu_choice == "create_epic_with_stories":
-            folder_path = inquirer.text(message="Enter the path to the Epic folder:").execute()
+            folder_path = inquirer.text(
+                message="Enter the path to the folder containing epic.md and stories.md:"
+            ).execute()
             if not folder_path:
                 folder_path = "data/EPIC-0-foundational"
 

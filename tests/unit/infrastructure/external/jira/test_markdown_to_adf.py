@@ -42,14 +42,29 @@ class TestMarkdownToAdf:
         assert node["content"][0]["content"][0]["type"] == "paragraph"
         assert node["content"][0]["content"][0]["content"][0]["text"] == "First item"
 
-    def test_checklist_becomes_task_list(self):
+    def test_checklist_becomes_bullet_list_with_checkbox_glyph(self):
+        # Jira's issue create/edit API rejects ADF "taskList" nodes for the
+        # description field, so checklists fall back to a plain bulletList.
         doc = markdown_to_adf("- [ ] Todo item\n- [x] Done item")
 
         node = doc["content"][0]
-        assert node["type"] == "taskList"
-        assert node["content"][0]["type"] == "taskItem"
-        assert node["content"][0]["attrs"]["state"] == "TODO"
-        assert node["content"][1]["attrs"]["state"] == "DONE"
+        assert node["type"] == "bulletList"
+        assert node["content"][0]["type"] == "listItem"
+
+        todo_text_nodes = node["content"][0]["content"][0]["content"]
+        assert todo_text_nodes[0] == {"type": "text", "text": "☐ "}
+        assert todo_text_nodes[1] == {"type": "text", "text": "Todo item"}
+
+        done_text_nodes = node["content"][1]["content"][0]["content"]
+        assert done_text_nodes[0] == {"type": "text", "text": "☑ "}
+        assert done_text_nodes[1] == {"type": "text", "text": "Done item"}
+
+    def test_checklist_and_plain_bullets_share_one_list(self):
+        doc = markdown_to_adf("- Plain bullet\n- [ ] Checklist item")
+
+        assert len(doc["content"]) == 1
+        assert doc["content"][0]["type"] == "bulletList"
+        assert len(doc["content"][0]["content"]) == 2
 
     def test_link_gets_link_mark(self):
         doc = markdown_to_adf("[Architecture Docs](../docs/architecture.md)")

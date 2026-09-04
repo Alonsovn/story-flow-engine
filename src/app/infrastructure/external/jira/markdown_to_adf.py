@@ -1,11 +1,17 @@
 import re
-from itertools import count
 from typing import Any
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 _CHECKLIST_ITEM_RE = re.compile(r"^[-*]\s+\[([ xX])\]\s+(.*)$")
 _BULLET_ITEM_RE = re.compile(r"^[-*]\s+(.*)$")
 _INLINE_RE = re.compile(r"\*\*(?P<bold>.+?)\*\*|\[(?P<link_text>[^\]]+)\]\((?P<link_href>[^)]+)\)")
+
+# Jira's issue create/edit API rejects "taskList"/"taskItem" ADF nodes for the
+# description field (empirically confirmed - not just a schema nicety), so
+# checklist items render as a plain bulletList with a checkbox glyph prefix
+# instead of a real ADF task list.
+_CHECKED_PREFIX = "☑ "
+_UNCHECKED_PREFIX = "☐ "
 
 
 def markdown_to_adf(text: str) -> dict[str, Any]:
@@ -18,7 +24,6 @@ def markdown_to_adf(text: str) -> dict[str, Any]:
     content: list[dict[str, Any]] = []
     list_buffer: list[dict[str, Any]] = []
     list_kind: str | None = None
-    task_ids = count()
 
     def flush_list() -> None:
         nonlocal list_kind
@@ -48,15 +53,16 @@ def markdown_to_adf(text: str) -> dict[str, Any]:
 
         checklist_match = _CHECKLIST_ITEM_RE.match(line)
         if checklist_match:
-            if list_kind != "taskList":
+            if list_kind != "bulletList":
                 flush_list()
-                list_kind = "taskList"
-            state = "DONE" if checklist_match.group(1).lower() == "x" else "TODO"
+                list_kind = "bulletList"
+            checked = checklist_match.group(1).lower() == "x"
+            prefix = _CHECKED_PREFIX if checked else _UNCHECKED_PREFIX
+            item_content = [{"type": "text", "text": prefix}] + _inline_nodes(checklist_match.group(2))
             list_buffer.append(
                 {
-                    "type": "taskItem",
-                    "attrs": {"localId": f"task-{next(task_ids)}", "state": state},
-                    "content": _inline_nodes(checklist_match.group(2)),
+                    "type": "listItem",
+                    "content": [{"type": "paragraph", "content": item_content}],
                 }
             )
             continue

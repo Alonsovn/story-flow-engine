@@ -13,10 +13,14 @@ from src.app.domain.entities import Epic, IssueStatus
 from src.app.domain.value_objects import IssueId, Priority
 
 # TBD (specs/2026-09-03-epic-story-jira-upload-with-adf-formatting.md, Phase 1):
-# confirm these against the target Jira project's actual issue type scheme
-# before relying on story creation/linking in production.
+# confirm against the target Jira project's actual issue type scheme before
+# relying on this in production.
 _STORY_ISSUE_TYPE = "Story"
-_STORY_POINTS_FIELD = "customfield_10011"
+# Story points are intentionally not sent on story creation: customfield_10011
+# (the epic's story-points field) is confirmed NOT valid for the Story issue
+# type's create screen on this Jira project ("Field 'customfield_10011'
+# cannot be set. It is not on the appropriate screen, or unknown."). Wire the
+# correct field once it's identified for stories specifically.
 
 
 class JiraApiRepositoryImpl(JiraRepository):
@@ -190,8 +194,6 @@ class JiraApiRepositoryImpl(JiraRepository):
             # on this in production.
             "parent": {"key": request.epic_key},
         }
-        if request.story_points is not None:
-            fields[_STORY_POINTS_FIELD] = request.story_points
 
         payload = {"fields": fields}
 

@@ -103,6 +103,25 @@ class TestParseStoriesMarkdown:
     def test_no_stories_returns_empty_list(self):
         assert parse_stories_markdown("# Stories for Epic: Sample\n\nNothing here.") == []
 
+    def test_parses_persona_named_as_phrasing(self):
+        persona_story = """### US-EP4-CLI-001: Guided Import Flow
+
+**Story ID**: US-EP4-CLI-001
+**Epic Link**: EPIC-4
+
+**As** Maya, a Solo/Small-Team Developer,
+**I want to** run one guided import command,
+**So that** I never lose track of what's about to happen.
+
+**Acceptance Criteria**:
+
+- [ ] Given a valid folder, then it imports successfully.
+"""
+        stories = parse_stories_markdown(persona_story)
+
+        assert len(stories) == 1
+        assert stories[0].as_a == "Maya, a Solo/Small-Team Developer,"
+
     def test_missing_required_field_raises(self):
         broken = """### US-EP0-BE-001: Broken Story
 

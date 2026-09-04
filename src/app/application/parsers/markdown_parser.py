@@ -6,7 +6,7 @@ from src.app.domain.exceptions import BusinessRuleViolationException
 
 _STORY_HEADING_RE = re.compile(r"^###\s+(?P<story_id>[^:]+):\s*(?P<title>.+)$")
 _FIELD_RE = re.compile(r"^\*\*([^*]+)\*\*:\s*(.*)$")
-_AS_A_RE = re.compile(r"^\*\*As a\*\*\s*(.*)$")
+_AS_A_RE = re.compile(r"^\*\*As(?: a)?\*\*\s*(.*)$")  # "As a <role>," or persona-named "As <Name>, a <role>,"
 _WANT_RE = re.compile(r"^\*\*I want to\*\*\s*(.*)$")
 _SO_THAT_RE = re.compile(r"^\*\*So that\*\*\s*(.*)$")
 _ACCEPTANCE_HEADER_RE = re.compile(r"^\*\*Acceptance Criteria\*\*:?\s*$")

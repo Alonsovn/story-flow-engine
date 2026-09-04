@@ -168,6 +168,67 @@ async def test_get_epic_with_adf_description(jira_repository):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_get_stories_in_epic_success(jira_repository):
+    """
+    Test successful retrieval of stories linked to an epic via JQL search.
+    """
+    epic_key = "PROJ-100"
+    mock_response = {
+        "issues": [
+            {
+                "id": "10002",
+                "key": "PROJ-101",
+                "fields": {
+                    "summary": "First Story",
+                    "description": "Desc",
+                    "status": {"name": "To Do"},
+                    "created": "2026-01-01T10:00:00.000-0500",
+                    "updated": "2026-01-01T11:00:00.000-0500",
+                },
+            },
+            {
+                "id": "10003",
+                "key": "PROJ-102",
+                "fields": {
+                    "summary": "Second Story",
+                    "description": "Desc",
+                    "status": {"name": "In Progress"},
+                    "created": "2026-01-01T10:00:00.000-0500",
+                    "updated": "2026-01-01T11:00:00.000-0500",
+                },
+            },
+        ]
+    }
+
+    respx.get("https://test-jira.atlassian.net/rest/api/3/search").mock(
+        return_value=Response(200, json=mock_response)
+    )
+
+    stories = await jira_repository.get_stories_in_epic(IssueId.from_string(epic_key))
+
+    assert len(stories) == 2
+    assert stories[0].key == "PROJ-101"
+    assert stories[0].epic_link.key == epic_key
+    assert stories[1].key == "PROJ-102"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_stories_in_epic_empty(jira_repository):
+    """
+    Test an epic with no linked stories returns an empty list.
+    """
+    respx.get("https://test-jira.atlassian.net/rest/api/3/search").mock(
+        return_value=Response(200, json={"issues": []})
+    )
+
+    stories = await jira_repository.get_stories_in_epic(IssueId.from_string("PROJ-100"))
+
+    assert stories == []
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_create_epic_success(jira_repository):
     """
     Test successful creation of an Epic in the Jira API.

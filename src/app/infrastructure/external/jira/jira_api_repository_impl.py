@@ -156,7 +156,45 @@ class JiraApiRepositoryImpl(JiraRepository):
         return JiraApiHelpers.map_user_story(data, epic_key=epic_key)
 
     async def get_stories_in_epic(self, epic_id: IssueId) -> List[UserStory]:
-        pass
+        """
+        Retrieve all user stories whose parent is the given epic.
+
+        Args:
+            epic_id (IssueId): The IssueId of the parent epic.
+
+        Returns:
+            List[UserStory]: Stories linked to the epic (empty if none).
+
+        Raises:
+            httpx.HTTPError: If the API request fails.
+        """
+        jql = f'parent = "{epic_id.key}" AND issuetype = "{_STORY_ISSUE_TYPE}"'
+        url = f"{self.base_url}/rest/api/3/search"
+        logger = AppLogger.instance()
+        logger.info("Fetching stories for epic", extra={"epic_key": epic_id.key})
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url,
+                auth=(self.email, self.api_token),
+                headers={"Accept": "application/json"},
+                params={
+                    "jql": jql,
+                    "maxResults": 100,
+                    # Jira's search endpoint doesn't return full fields by
+                    # default the way a single-issue GET does - request
+                    # exactly what the mapper needs.
+                    "fields": "summary,description,status,created,updated,"
+                              "reporter,priority,labels,customfield_10011,parent",
+                },
+            )
+        response.raise_for_status()
+        data = response.json()
+
+        return [
+            JiraApiHelpers.map_user_story(issue, epic_key=epic_id.key)
+            for issue in data.get("issues", [])
+        ]
 
     async def find_epics_by_project(self, project_key: str) -> List[Epic]:
         if project_key != self.project_space_key:

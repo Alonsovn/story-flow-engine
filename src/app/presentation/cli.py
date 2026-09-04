@@ -4,10 +4,10 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
-from src.app.application.use_cases import CreateEpicWithStories
-from src.app.domain.exceptions import BusinessRuleViolationException
+from src.app.application.use_cases import CreateEpicWithStories, GetEpicWithStories
+from src.app.domain.exceptions import BusinessRuleViolationException, EntityNotFoundException
 from src.app.infrastructure.external.jira.dependencies import get_jira_repository
-from src.app.domain.value_objects import IssueId, Priority
+from src.app.domain.value_objects import Priority
 from InquirerPy import inquirer
 import os
 
@@ -82,17 +82,30 @@ def fetch_epic(issue_id: str):
     """
 
     async def main():
-        # Retrieve JiraApiRepository instance
         jira_repo = get_jira_repository()
+        use_case = GetEpicWithStories(jira_repository=jira_repo)
         try:
-            # Convert string to IssueId value object
-            issue_id_vo = IssueId.from_string(issue_id)
-            # Await the async get_epic method
-            epic = await jira_repo.get_epic(issue_id_vo)
-            body = Markdown(f"**{epic.summary}**\n\n{epic.description}")
-            console.print(Panel(body, title=f"Epic: {epic.key}"))
+            epic_dto = await use_case.execute(issue_id)
+        except EntityNotFoundException as e:
+            typer.echo(f"Epic not found: {e}")
+            return
         except Exception as e:
             typer.echo(f"Error fetching epic: {e}")
+            return
+
+        body = Markdown(f"**{epic_dto.summary}**\n\n{epic_dto.description}")
+        console.print(Panel(body, title=f"Epic: {epic_dto.key}"))
+
+        if not epic_dto.user_stories:
+            return
+
+        table = Table(title=f"Stories ({len(epic_dto.user_stories)})")
+        table.add_column("Key")
+        table.add_column("Summary")
+        table.add_column("Status")
+        for story in epic_dto.user_stories:
+            table.add_row(story.key, story.summary, story.status)
+        console.print(table)
 
     # Use asyncio.run to handle the async call
     asyncio.run(main())
